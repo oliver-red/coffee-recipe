@@ -159,7 +159,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text);
 @keyframes spin { to { transform: rotate(360deg); } }
 ::-webkit-scrollbar { width: 3px; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-.pb24 { padding-bottom: 24px; }
+.pb24 { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
 </style>
 </head>
 <body>
@@ -302,7 +302,7 @@ function showScr(id,title,opt={}){
   document.getElementById('btn-hdr-edit').classList.toggle('hidden',!opt.edit);
   S.hdrEditFn=opt.edit||null;
 }
-function pushScr(id,title,opt={}){S.stack.push({id,title,opt});showScr(id,title,opt);}
+function pushScr(id,title,opt={}){S.stack.push({id,title,opt});showScr(id,title,opt);history.pushState(null,'');}
 function doHdrEdit(){S.hdrEditFn&&S.hdrEditFn();}
 function goBack(){
   if(S.stack.length<2)return;
@@ -350,6 +350,7 @@ async function refreshAll(){
 async function initApp(){
   S.stack=[{id:'screen-home',title:'☕ 커피 레시피',opt:{}}];
   showScr('screen-home','☕ 커피 레시피',{});
+  history.pushState(null,'');
   await run(async()=>{
     const all=await GET('getAll');
     S.roasters=all.roasters;S.beans=all.beans;S.drippers=all.drippers;
@@ -705,6 +706,10 @@ async function saveBean(){
 }
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 initApp();
+window.addEventListener('popstate',()=>{
+  if(S.stack.length>1){goBack();}
+  history.pushState(null,'');
+});
 </script>
 </body>
 </html>
