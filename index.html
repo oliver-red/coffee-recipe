@@ -510,15 +510,18 @@ function renderHome(){
   const map={};
   S.roasters.forEach(r=>{map[r.id]={name:r.Roaster_Name,img:r.image_url||'',beans:[]};});
   S.beans.forEach(b=>{if(map[b.Roaster_REF])map[b.Roaster_REF].beans.push(b);});
-  let html='';
-  Object.values(map).forEach((g,i)=>{
+  let html=`
+  <div style="display:flex;gap:8px;margin-bottom:4px">
+    <button class="btn btn-secondary" style="flex:1" onclick="showBeanForm()">+ 원두 추가</button>
+    <button class="btn btn-secondary" style="flex:1" onclick="showRoasterForm()">+ 로스터리 추가</button>
+  </div>`;
+Object.values(map).forEach((g,i)=>{
     if(!g.beans.length)return;
     const rid=S.roasters.find(r=>r.Roaster_Name===g.name)?.id||'';
     html+=`<div class="roaster-group-label" onclick="openRoaster('${rid}')">
       ${g.img?`<img src="${g.img}" style="width:20px;height:20px;border-radius:50%;object-fit:cover">`:''} ${g.name} ›</div>`;
     g.beans.forEach(b=>{html+=beanCardHTML(b,false);});
   });
-  html+=`<button class="btn btn-secondary" style="margin-top:8px" onclick="showBeanForm()">+ 원두 추가</button>`;
   el.innerHTML=html;
 }
 function beanCardHTML(b,showSub){
