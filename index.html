@@ -126,9 +126,26 @@ html,body{height:100%;background:var(--bg);color:var(--text);
   font-size:16px;font-weight:700;text-align:center;outline:none;}
 .grinder-form-input:focus{border-color:var(--primary);}
 .roaster-group-label{font-size:11px;font-weight:800;color:var(--text-3);
-  text-transform:uppercase;letter-spacing:.1em;padding:12px 4px 6px;}
+  text-transform:uppercase;letter-spacing:.1em;padding:12px 4px 6px;
+  cursor:pointer;display:flex;align-items:center;gap:4px;}
+.roaster-group-label:active{color:var(--primary);}
 .empty{text-align:center;padding:24px;color:var(--text-3);font-size:14px;
   background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow-sm);}
+/* ── 이미지 ── */
+.detail-img{width:100%;border-radius:var(--radius);max-height:240px;object-fit:cover;
+  box-shadow:var(--shadow);display:block;}
+.img-upload-area{position:relative;border-radius:var(--radius);overflow:hidden;
+  background:var(--card2);border:2px dashed var(--border);min-height:120px;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  transition:border-color .15s;}
+.img-upload-area:active{border-color:var(--primary);}
+.img-upload-area img{width:100%;max-height:220px;object-fit:cover;border-radius:calc(var(--radius) - 2px);}
+.img-upload-area .img-placeholder{display:flex;flex-direction:column;align-items:center;
+  gap:8px;color:var(--text-3);font-size:14px;padding:24px;}
+.img-upload-area .img-placeholder span{font-size:32px;}
+.img-change-btn{position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,.55);
+  color:#fff;border:none;border-radius:20px;padding:6px 12px;font-size:12px;
+  font-weight:600;cursor:pointer;}
 #toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(10px);
   background:#222;color:#fff;padding:11px 22px;border-radius:24px;font-size:14px;font-weight:500;
   opacity:0;transition:all .25s;pointer-events:none;white-space:nowrap;z-index:9999;
@@ -153,6 +170,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);
     <button class="btn-icon hidden" id="btn-hdr-edit" onclick="doHdrEdit()">✏️</button>
   </header>
   <div id="screens">
+
+    <!-- HOME -->
     <div id="screen-home" class="screen active">
       <div class="search-box">
         <span class="search-icon">🔍</span>
@@ -161,7 +180,38 @@ html,body{height:100%;background:var(--bg);color:var(--text);
       </div>
       <div id="home-list"></div>
     </div>
+
+    <!-- ROASTER DETAIL -->
+    <div id="screen-roaster" class="screen">
+      <div id="roaster-info" class="bean-header"></div>
+      <div class="section-label">원두 목록</div>
+      <div id="roaster-bean-list"></div>
+    </div>
+
+    <!-- ROASTER FORM -->
+    <div id="screen-roaster-form" class="screen">
+      <input type="hidden" id="rf-id">
+      <div class="form-group"><label class="form-label">로스터리 이름</label>
+        <input type="text" class="form-input" id="rf-name" placeholder="로스터리 이름"></div>
+      <div class="form-group"><label class="form-label">메모</label>
+        <textarea class="form-textarea" id="rf-memo" placeholder="디게싱, 기타 정보..."></textarea></div>
+      <div class="form-group"><label class="form-label">사진</label>
+        <div class="img-upload-area" id="rf-img-area" onclick="triggerImg('rf')">
+          <div class="img-placeholder"><span>📷</span>사진 추가</div>
+          <button class="img-change-btn" id="rf-img-change" style="display:none">📷 변경</button>
+        </div>
+        <input type="file" id="rf-img-file" accept="image/*" capture="environment" style="display:none" onchange="onImgPick('rf',this)">
+        <input type="hidden" id="rf-img-url">
+      </div>
+      <div class="btn-row pb24">
+        <button class="btn btn-secondary" onclick="goBack()">취소</button>
+        <button class="btn btn-primary" onclick="saveRoaster()">저장</button>
+      </div>
+    </div>
+
+    <!-- BEAN DETAIL -->
     <div id="screen-bean" class="screen">
+      <img id="bean-detail-img" class="detail-img" style="display:none">
       <div id="bean-info" class="bean-header"></div>
       <div class="section-label">드립 레시피</div>
       <div id="bean-drip-list"></div>
@@ -170,7 +220,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);
       <div id="bean-esp-list"></div>
       <button class="btn btn-secondary" onclick="showEspForm()">+ 에스프레소 레시피 추가</button>
     </div>
+
+    <!-- DRIP DETAIL -->
     <div id="screen-drip" class="screen">
+      <img id="drip-detail-img" class="detail-img" style="display:none">
       <div id="drip-info" class="detail-header"></div>
       <div class="section-label">추출 단계</div>
       <div id="drip-steps" class="list-box"></div>
@@ -183,7 +236,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);
         <button class="btn btn-danger" onclick="deleteCurrentDrip()">🗑 삭제</button>
       </div>
     </div>
+
+    <!-- ESP DETAIL -->
     <div id="screen-esp" class="screen">
+      <img id="esp-detail-img" class="detail-img" style="display:none">
       <div id="esp-info" class="detail-header"></div>
       <div id="esp-grinder-wrap">
         <div class="section-label">그라인더 설정</div>
@@ -194,6 +250,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);
         <button class="btn btn-danger" onclick="deleteCurrentEsp()">🗑 삭제</button>
       </div>
     </div>
+
+    <!-- DRIP FORM -->
     <div id="screen-drip-form" class="screen">
       <input type="hidden" id="df-id">
       <div class="form-group"><label class="form-label">드리퍼</label>
@@ -213,6 +271,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);
         <input type="number" class="form-input" id="df-ice" placeholder="예: 150"></div>
       <div class="form-group"><label class="form-label">메모</label>
         <textarea class="form-textarea" id="df-note" placeholder="가수 정보, 기타 메모..."></textarea></div>
+      <div class="form-group"><label class="form-label">사진</label>
+        <div class="img-upload-area" id="df-img-area" onclick="triggerImg('df')">
+          <div class="img-placeholder"><span>📷</span>사진 추가</div>
+          <button class="img-change-btn" id="df-img-change" style="display:none">📷 변경</button>
+        </div>
+        <input type="file" id="df-img-file" accept="image/*" capture="environment" style="display:none" onchange="onImgPick('df',this)">
+        <input type="hidden" id="df-img-url">
+      </div>
       <div class="section-label">추출 단계</div>
       <div id="df-steps" style="display:flex;flex-direction:column;gap:10px"></div>
       <button class="btn btn-secondary" onclick="addStep()">+ 스텝 추가</button>
@@ -223,6 +289,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);
         <button class="btn btn-primary" onclick="saveDrip()">저장</button>
       </div>
     </div>
+
+    <!-- ESP FORM -->
     <div id="screen-esp-form" class="screen">
       <input type="hidden" id="ef-id">
       <div class="form-group"><label class="form-label">원두 용량 (g)</label>
@@ -233,6 +301,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);
         <input type="text" class="form-input" id="ef-yield" placeholder="예: 36-42"></div>
       <div class="form-group"><label class="form-label">추출 시간 (초)</label>
         <input type="text" class="form-input" id="ef-time" placeholder="예: 28-30"></div>
+      <div class="form-group"><label class="form-label">사진</label>
+        <div class="img-upload-area" id="ef-img-area" onclick="triggerImg('ef')">
+          <div class="img-placeholder"><span>📷</span>사진 추가</div>
+          <button class="img-change-btn" id="ef-img-change" style="display:none">📷 변경</button>
+        </div>
+        <input type="file" id="ef-img-file" accept="image/*" capture="environment" style="display:none" onchange="onImgPick('ef',this)">
+        <input type="hidden" id="ef-img-url">
+      </div>
       <div class="section-label" style="margin-top:4px">그라인더 설정 (선택)</div>
       <div id="ef-grinders" style="display:flex;flex-direction:column;gap:8px"></div>
       <div class="btn-row pb24">
@@ -240,6 +316,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);
         <button class="btn btn-primary" onclick="saveEsp()">저장</button>
       </div>
     </div>
+
+    <!-- BEAN FORM -->
     <div id="screen-bean-form" class="screen">
       <input type="hidden" id="bf-id">
       <div class="form-group"><label class="form-label">로스터리</label>
@@ -258,11 +336,20 @@ html,body{height:100%;background:var(--bg);color:var(--text);
         <input type="text" class="form-input" id="bf-deg" placeholder="예: 5~7일, 3일 이상"></div>
       <div class="form-group"><label class="form-label">비고</label>
         <textarea class="form-textarea" id="bf-note" placeholder="기타 정보..."></textarea></div>
+      <div class="form-group"><label class="form-label">사진</label>
+        <div class="img-upload-area" id="bf-img-area" onclick="triggerImg('bf')">
+          <div class="img-placeholder"><span>📷</span>사진 추가</div>
+          <button class="img-change-btn" id="bf-img-change" style="display:none">📷 변경</button>
+        </div>
+        <input type="file" id="bf-img-file" accept="image/*" capture="environment" style="display:none" onchange="onImgPick('bf',this)">
+        <input type="hidden" id="bf-img-url">
+      </div>
       <div class="btn-row pb24">
         <button class="btn btn-secondary" onclick="goBack()">취소</button>
         <button class="btn btn-primary" onclick="saveBean()">저장</button>
       </div>
     </div>
+
   </div>
 </div>
 <div id="toast"></div>
@@ -272,7 +359,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 import { initializeApp }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { initializeFirestore, persistentLocalCache,
-  collection, getDocs, getDocsFromCache, doc, addDoc, updateDoc, deleteDoc }
+  collection, getDocs, getDocsFromCache,
+  doc, addDoc, updateDoc, deleteDoc }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const app = initializeApp({
@@ -283,36 +371,33 @@ const app = initializeApp({
   messagingSenderId:"343760449387",
   appId:"1:343760449387:web:5162292ce1b32a28f3262e"
 });
-const db = initializeFirestore(app, {
-  localCache: persistentLocalCache()
-});
+const db = initializeFirestore(app,{localCache:persistentLocalCache()});
 
-const toArr = snap => snap.docs.map(d=>({id:d.id,...d.data()}));
-const getCol = async name => toArr(await getDocs(collection(db,name)));
-const getColCache = async name => {
-  try {
-    const snap = await getDocsFromCache(collection(db,name));
-    if(!snap.empty) return toArr(snap);
-  } catch(e){}
-  return getCol(name);
+const toArr = s => s.docs.map(d=>({id:d.id,...d.data()}));
+const getCol = async n => toArr(await getDocs(collection(db,n)));
+const getColCache = async n => {
+  try{const s=await getDocsFromCache(collection(db,n));if(!s.empty)return toArr(s);}catch(e){}
+  return getCol(n);
 };
-const docRef = (col,id) => doc(db,col,id);
+const docRef = (c,id) => doc(db,c,id);
+
+const CLOUDINARY = 'https://api.cloudinary.com/v1_1/dd6ughqua/image/upload';
+const PRESET = 'coffee_recipe';
 
 const S = {
   stack:[],hdrEditFn:null,stepSeq:0,dirty:false,
   roasters:[],drippers:[],grinders:[],
   beans:[],allDrips:[],allEsps:[],
   recipeCache:{},
-  bean:null,drip:null,esp:null,
+  roaster:null,bean:null,drip:null,esp:null,
 };
 
 function buildCache(drips,esps){
   const c={};
-  drips.forEach(r=>{ c[r.id]={steps:r.steps||[],grinder_settings:r.grinder_settings||[]}; });
-  esps.forEach(r=>{ c['esp_'+r.id]={steps:[],grinder_settings:r.grinder_settings||[]}; });
+  drips.forEach(r=>{c[r.id]={steps:r.steps||[],grinder_settings:r.grinder_settings||[]};});
+  esps.forEach(r=>{c['esp_'+r.id]={steps:[],grinder_settings:r.grinder_settings||[]};});
   return c;
 }
-
 function enrich(){
   const rm={},dm={};
   S.roasters.forEach(r=>{rm[r.id]=r.Roaster_Name;});
@@ -339,6 +424,7 @@ function goBack(){
   showScr(p.id,p.title,p.opt);
   if(S.dirty){
     if(p.id==='screen-bean'&&S.bean)renderBeanDetail();
+    if(p.id==='screen-roaster'&&S.roaster)renderRoasterDetail();
     if(p.id==='screen-home')renderHome();
     S.dirty=false;
   }
@@ -356,10 +442,45 @@ function toast(msg,err=false){
 }
 async function run(fn){loading(true);try{return await fn();}catch(e){toast('오류: '+e.message,true);}finally{loading(false);}}
 
+// ── 이미지 업로드 ──
+async function uploadImg(file){
+  const fd=new FormData();fd.append('file',file);fd.append('upload_preset',PRESET);
+  const res=await fetch(CLOUDINARY,{method:'POST',body:fd});
+  const d=await res.json();
+  if(d.error)throw new Error(d.error.message);
+  return d.secure_url;
+}
+function triggerImg(field){document.getElementById(field+'-img-file').click();}
+async function onImgPick(field,input){
+  const file=input.files[0];if(!file)return;
+  loading(true);
+  try{
+    const url=await uploadImg(file);
+    setImgField(field,url);
+  }catch(e){toast('이미지 업로드 실패: '+e.message,true);}
+  finally{loading(false);}
+}
+function setImgField(field,url){
+  document.getElementById(field+'-img-url').value=url||'';
+  const area=document.getElementById(field+'-img-area');
+  const chg=document.getElementById(field+'-img-change');
+  if(url){
+    const ph=area.querySelector('.img-placeholder');
+    let img=area.querySelector('img.uploaded');
+    if(!img){img=document.createElement('img');img.className='uploaded';img.style.cssText='width:100%;max-height:220px;object-fit:cover;border-radius:calc(var(--radius) - 2px)';area.insertBefore(img,ph);}
+    img.src=url;ph.style.display='none';chg.style.display='block';
+  }else{
+    const img=area.querySelector('img.uploaded');
+    if(img)img.remove();
+    area.querySelector('.img-placeholder').style.display='flex';
+    chg.style.display='none';
+  }
+}
+
 // ── Init ──
-async function loadAll(usecache){
-  const g = usecache ? getColCache : getCol;
-  const [ro,be,dr,gr,rd,re] = await Promise.all([
+async function loadAll(useCache){
+  const g=useCache?getColCache:getCol;
+  const [ro,be,dr,gr,rd,re]=await Promise.all([
     g('roasters'),g('beans'),g('drippers'),g('grinders'),
     g('recipe_drip'),g('recipe_espresso'),
   ]);
@@ -367,37 +488,34 @@ async function loadAll(usecache){
   S.allDrips=rd;S.allEsps=re;
   enrich();S.recipeCache=buildCache(S.allDrips,S.allEsps);
 }
-
 async function initApp(){
   S.stack=[{id:'screen-home',title:'☕ 커피 레시피',opt:{}}];
   showScr('screen-home','☕ 커피 레시피',{});
   history.pushState(null,'');
-  await run(async()=>{
-    await loadAll(true);   // 캐시에서 즉시 렌더
-    renderHome();
-  });
-  // 백그라운드에서 서버 동기화
-  loadAll(false).then(()=>{ enrich();S.recipeCache=buildCache(S.allDrips,S.allEsps);renderHome(); }).catch(()=>{});
+  await run(async()=>{await loadAll(true);renderHome();});
+  loadAll(false).then(()=>{enrich();S.recipeCache=buildCache(S.allDrips,S.allEsps);renderHome();}).catch(()=>{});
 }
-
 async function refreshAll(){
-  const [be,rd,re]=await Promise.all([
-    getCol('beans'),getCol('recipe_drip'),getCol('recipe_espresso'),
-  ]);
+  const [be,rd,re]=await Promise.all([getCol('beans'),getCol('recipe_drip'),getCol('recipe_espresso')]);
   S.beans=be;S.allDrips=rd;S.allEsps=re;
   enrich();S.recipeCache=buildCache(S.allDrips,S.allEsps);S.dirty=true;
+}
+async function refreshRoasters(){
+  S.roasters=await getCol('roasters');enrich();S.dirty=true;
 }
 
 // ── Home ──
 function renderHome(){
   const el=document.getElementById('home-list');
   const map={};
-  S.roasters.forEach(r=>{map[r.id]={name:r.Roaster_Name,beans:[]};});
+  S.roasters.forEach(r=>{map[r.id]={name:r.Roaster_Name,img:r.image_url||'',beans:[]};});
   S.beans.forEach(b=>{if(map[b.Roaster_REF])map[b.Roaster_REF].beans.push(b);});
   let html='';
-  Object.values(map).forEach(g=>{
+  Object.values(map).forEach((g,i)=>{
     if(!g.beans.length)return;
-    html+=`<div class="roaster-group-label">${g.name}</div>`;
+    const rid=S.roasters.find(r=>r.Roaster_Name===g.name)?.id||'';
+    html+=`<div class="roaster-group-label" onclick="openRoaster('${rid}')">
+      ${g.img?`<img src="${g.img}" style="width:20px;height:20px;border-radius:50%;object-fit:cover">`:''} ${g.name} ›</div>`;
     g.beans.forEach(b=>{html+=beanCardHTML(b,false);});
   });
   html+=`<button class="btn btn-secondary" style="margin-top:8px" onclick="showBeanForm()">+ 원두 추가</button>`;
@@ -407,8 +525,9 @@ function beanCardHTML(b,showSub){
   const r=b.Roast_Level?`<span class="tag tag-roast">${b.Roast_Level}</span>`:'';
   const d=b.Degassing_Days?`<span class="tag tag-deg">⏱ ${b.Degassing_Days}</span>`:'';
   const s=(showSub&&b.Roaster_Name)?`<div class="card-sub">${b.Roaster_Name}</div>`:'';
-  return`<div class="card" style="margin-bottom:8px" onclick="openBean('${b.id}')">
-    <div class="card-title">${b.Bean_Name}</div>${s}<div class="card-tags">${r}${d}</div></div>`;
+  const img=b.image_url?`<img src="${b.image_url}" style="width:44px;height:44px;border-radius:10px;object-fit:cover;flex-shrink:0">`:'';
+  return`<div class="card" style="margin-bottom:8px;display:flex;align-items:center;gap:12px" onclick="openBean('${b.id}')">
+    ${img}<div style="flex:1;min-width:0"><div class="card-title">${b.Bean_Name}</div>${s}<div class="card-tags">${r}${d}</div></div></div>`;
 }
 let _st;
 function onSearch(v){
@@ -422,6 +541,48 @@ function onSearch(v){
   },200);
 }
 
+// ── Roaster ──
+function openRoaster(id){
+  S.roaster=S.roasters.find(r=>r.id===id);if(!S.roaster)return;
+  pushScr('screen-roaster',S.roaster.Roaster_Name,{back:true,edit:()=>showRoasterForm(id)});
+  renderRoasterDetail();
+}
+function renderRoasterDetail(){
+  const ro=S.roaster;
+  document.getElementById('roaster-info').innerHTML=`
+    ${ro.image_url?`<img src="${ro.image_url}" style="width:100%;max-height:200px;object-fit:cover;border-radius:10px;margin-bottom:14px">`:''}
+    <div class="bean-name">${ro.Roaster_Name}</div>
+    ${ro.Memo?`<div class="bean-note" style="margin-top:10px">${ro.Memo}</div>`:''}`;
+  const beans=S.beans.filter(b=>b.Roaster_REF===ro.id);
+  document.getElementById('roaster-bean-list').innerHTML=beans.length
+    ?beans.map(b=>beanCardHTML(b,false)).join('')
+    :'<div class="empty">원두 없음</div>';
+}
+function showRoasterForm(id=null){
+  pushScr('screen-roaster-form',id?'로스터리 수정':'로스터리 추가',{back:true});
+  ['rf-id','rf-name','rf-memo'].forEach(i=>document.getElementById(i).value='');
+  setImgField('rf','');
+  if(id){
+    const ro=S.roasters.find(r=>r.id===id);if(!ro)return;
+    document.getElementById('rf-id').value=ro.id;
+    document.getElementById('rf-name').value=ro.Roaster_Name||'';
+    document.getElementById('rf-memo').value=ro.Memo||'';
+    if(ro.image_url)setImgField('rf',ro.image_url);
+  }
+}
+async function saveRoaster(){
+  const id=document.getElementById('rf-id').value;
+  const name=document.getElementById('rf-name').value.trim();
+  if(!name){toast('로스터리 이름을 입력하세요',true);return;}
+  const data={Roaster_Name:name,Memo:document.getElementById('rf-memo').value,
+    image_url:document.getElementById('rf-img-url').value||''};
+  await run(async()=>{
+    if(id)await updateDoc(docRef('roasters',id),data);
+    else await addDoc(collection(db,'roasters'),data);
+    await refreshRoasters();toast('저장되었습니다 ✓');goBack();
+  });
+}
+
 // ── Bean ──
 function openBean(id){
   S.bean=S.beans.find(b=>b.id===id);if(!S.bean)return;
@@ -431,6 +592,8 @@ function openBean(id){
 function renderBeanDetail(){
   const b=S.bean;
   const ro=S.roasters.find(r=>r.id===b.Roaster_REF);
+  const img=document.getElementById('bean-detail-img');
+  if(b.image_url){img.src=b.image_url;img.style.display='block';}else{img.style.display='none';}
   document.getElementById('bean-info').innerHTML=`
     <div class="bean-name">${b.Bean_Name}</div>
     <div class="bean-roaster">${ro?ro.Roaster_Name:''}</div>
@@ -444,6 +607,7 @@ function renderBeanDetail(){
   const esps=S.allEsps.filter(r=>r.Bean_REF===b.id);
   document.getElementById('bean-drip-list').innerHTML=drips.length
     ?drips.map(r=>`<div class="recipe-card" onclick="openDrip('${r.id}')">
+        ${r.image_url?`<img src="${r.image_url}" style="width:100%;height:120px;object-fit:cover;border-radius:10px;margin-bottom:10px">`:''}
         <div class="card-row"><span style="font-weight:700">${r.Dripper_Name}</span>
           <span class="tag ${r.Type==='ICE'?'tag-ice':'tag-hot'}">${r.Type||'-'}</span></div>
         <div class="recipe-stats">
@@ -454,6 +618,7 @@ function renderBeanDetail(){
     :'<div class="empty">레시피 없음</div>';
   document.getElementById('bean-esp-list').innerHTML=esps.length
     ?esps.map(r=>`<div class="recipe-card" onclick="openEsp('${r.id}')">
+        ${r.image_url?`<img src="${r.image_url}" style="width:100%;height:120px;object-fit:cover;border-radius:10px;margin-bottom:10px">`:''}
         <div class="card-row"><span style="font-weight:700">에스프레소</span>
           <span class="tag tag-esp">ESP</span></div>
         <div class="recipe-stats">
@@ -463,7 +628,6 @@ function renderBeanDetail(){
         </div></div>`).join('')
     :'<div class="empty">레시피 없음</div>';
 }
-
 function gName(gid){return(S.grinders.find(g=>g.id===gid)||{}).Grinder_Name||gid;}
 
 // ── Drip Detail ──
@@ -472,6 +636,8 @@ function openDrip(id){
   pushScr('screen-drip',`${S.drip.Dripper_Name} ${S.drip.Type||''}`,{back:true});
   const{steps,grinder_settings:gs}=S.recipeCache[id]||{steps:[],grinder_settings:[]};
   const r=S.drip;
+  const img=document.getElementById('drip-detail-img');
+  if(r.image_url){img.src=r.image_url;img.style.display='block';}else{img.style.display='none';}
   document.getElementById('drip-info').innerHTML=`
     <div class="card-row">
       <span style="font-size:19px;font-weight:800">${r.Dripper_Name}</span>
@@ -518,6 +684,8 @@ function openEsp(id){
   pushScr('screen-esp','에스프레소',{back:true});
   const{grinder_settings:gs}=S.recipeCache['esp_'+id]||{grinder_settings:[]};
   const r=S.esp;
+  const img=document.getElementById('esp-detail-img');
+  if(r.image_url){img.src=r.image_url;img.style.display='block';}else{img.style.display='none';}
   document.getElementById('esp-info').innerHTML=`
     <div class="card-row">
       <span style="font-size:19px;font-weight:800">에스프레소</span>
@@ -556,7 +724,7 @@ function showDripForm(id=null){
     S.drippers.map(d=>`<option value="${d.id}">${d.Dripper_Name}</option>`).join('');
   ['df-id','df-dose','df-temp','df-ice','df-note'].forEach(i=>document.getElementById(i).value='');
   setType('HOT');document.getElementById('df-steps').innerHTML='';S.stepSeq=0;
-  renderGrForm('df-grinders',[]);
+  setImgField('df','');renderGrForm('df-grinders',[]);
   if(id){
     const r=S.allDrips.find(x=>x.id===id);if(!r)return;
     const{steps,grinder_settings:gs}=S.recipeCache[id]||{steps:[],grinder_settings:[]};
@@ -567,8 +735,8 @@ function showDripForm(id=null){
     document.getElementById('df-temp').value=r.Temp_c||'';
     document.getElementById('df-ice').value=r.Ice_g||'';
     document.getElementById('df-note').value=r.Note||'';
-    steps.forEach(s=>addStep(s));
-    renderGrForm('df-grinders',gs);
+    if(r.image_url)setImgField('df',r.image_url);
+    steps.forEach(s=>addStep(s));renderGrForm('df-grinders',gs);
   }
 }
 function setType(t){
@@ -634,9 +802,9 @@ async function saveDrip(){
     Temp_c:document.getElementById('df-temp').value,
     Ice_g:document.getElementById('df-ice').value||'',
     Note:document.getElementById('df-note').value,
+    image_url:document.getElementById('df-img-url').value||'',
     Total_Pour:steps.reduce((s,x)=>s+x.Pour_g,0),
-    steps,
-    grinder_settings:collectGr('df-grinders'),
+    steps,grinder_settings:collectGr('df-grinders'),
   };
   await run(async()=>{
     if(id)await updateDoc(docRef('recipe_drip',id),data);
@@ -649,7 +817,7 @@ async function saveDrip(){
 function showEspForm(id=null){
   pushScr('screen-esp-form',id?'에스프레소 수정':'에스프레소 추가',{back:true});
   ['ef-id','ef-dose','ef-temp','ef-yield','ef-time'].forEach(i=>document.getElementById(i).value='');
-  renderGrForm('ef-grinders',[]);
+  setImgField('ef','');renderGrForm('ef-grinders',[]);
   if(id){
     const r=S.allEsps.find(x=>x.id===id);if(!r)return;
     const{grinder_settings:gs}=S.recipeCache['esp_'+id]||{grinder_settings:[]};
@@ -658,6 +826,7 @@ function showEspForm(id=null){
     document.getElementById('ef-temp').value=r.Temp_c||'';
     document.getElementById('ef-yield').value=r.Yield_g||'';
     document.getElementById('ef-time').value=r.Time_Sec||'';
+    if(r.image_url)setImgField('ef',r.image_url);
     renderGrForm('ef-grinders',gs);
   }
 }
@@ -669,6 +838,7 @@ async function saveEsp(){
     Temp_c:document.getElementById('ef-temp').value,
     Yield_g:document.getElementById('ef-yield').value,
     Time_Sec:document.getElementById('ef-time').value,
+    image_url:document.getElementById('ef-img-url').value||'',
     grinder_settings:collectGr('ef-grinders'),
   };
   await run(async()=>{
@@ -685,6 +855,7 @@ function showBeanForm(id=null){
     S.roasters.map(r=>`<option value="${r.id}">${r.Roaster_Name}</option>`).join('');
   ['bf-id','bf-name','bf-origin','bf-deg','bf-note'].forEach(i=>document.getElementById(i).value='');
   document.getElementById('bf-roast').value='';
+  setImgField('bf','');
   if(id){
     const b=S.beans.find(x=>x.id===id);if(!b)return;
     document.getElementById('bf-id').value=b.id;
@@ -694,6 +865,7 @@ function showBeanForm(id=null){
     document.getElementById('bf-roast').value=b.Roast_Level||'';
     document.getElementById('bf-deg').value=b.Degassing_Days||'';
     document.getElementById('bf-note').value=b.Note||'';
+    if(b.image_url)setImgField('bf',b.image_url);
   }
 }
 async function saveBean(){
@@ -702,11 +874,11 @@ async function saveBean(){
   if(!name){toast('원두 이름을 입력하세요',true);return;}
   const data={
     Roaster_REF:document.getElementById('bf-roaster').value,
-    Bean_Name:name,
-    Origin:document.getElementById('bf-origin').value,
+    Bean_Name:name,Origin:document.getElementById('bf-origin').value,
     Roast_Level:document.getElementById('bf-roast').value,
     Degassing_Days:document.getElementById('bf-deg').value,
     Note:document.getElementById('bf-note').value,
+    image_url:document.getElementById('bf-img-url').value||'',
   };
   await run(async()=>{
     if(id)await updateDoc(docRef('beans',id),data);
@@ -715,9 +887,9 @@ async function saveBean(){
   });
 }
 
-// ── Global 노출 (onclick 핸들러용) ──
 Object.assign(window,{
-  goBack,doHdrEdit,onSearch,
+  goBack,doHdrEdit,onSearch,triggerImg,onImgPick,
+  openRoaster,showRoasterForm,saveRoaster,
   openBean,showBeanForm,saveBean,
   openDrip,editCurrentDrip,deleteCurrentDrip,showDripForm,setType,addStep,removeStep,saveDrip,
   openEsp,editCurrentEsp,deleteCurrentEsp,showEspForm,saveEsp,
