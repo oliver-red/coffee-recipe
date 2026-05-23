@@ -292,6 +292,7 @@ const S = {
   beans:[], allDrips:[], allEsps:[],
   recipeCache:{},
   bean:null, drip:null, esp:null,
+  dirty: false,
 };
 function showScr(id,title,opt={}){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -309,8 +310,11 @@ function goBack(){
   S.stack.pop();
   const p=S.stack[S.stack.length-1];
   showScr(p.id,p.title,p.opt);
-  if(p.id==='screen-bean'&&S.bean)renderBeanDetail();
-  if(p.id==='screen-home')renderHome();
+  if(S.dirty){
+    if(p.id==='screen-bean'&&S.bean)renderBeanDetail();
+    if(p.id==='screen-home')renderHome();
+    S.dirty=false;
+  }
 }
 async function GET(action,params={}){
   const url=new URL(API_URL);
@@ -346,6 +350,7 @@ async function refreshAll(){
   const all=await GET('getAll');
   S.beans=all.beans;S.allDrips=all.recipes_drip;S.allEsps=all.recipes_esp;
   S.recipeCache={};
+  S.dirty=true;
 }
 async function initApp(){
   S.stack=[{id:'screen-home',title:'☕ 커피 레시피',opt:{}}];
@@ -400,6 +405,7 @@ function openBean(id){
   if(!S.bean)return;
   pushScr('screen-bean',S.bean.Bean_Name,{back:true,edit:()=>showBeanForm(id)});
   renderBeanDetail();
+  preloadRecipes(id);
 }
 function renderBeanDetail(){
   const b=S.bean;
@@ -436,6 +442,21 @@ function renderBeanDetail(){
         </div></div>`).join('')
     :'<div class="empty">레시피 없음</div>';
 }
+function preloadRecipes(beanId){
+  const drips=S.allDrips.filter(r=>r.Bean_REF===beanId);
+  const esps=S.allEsps.filter(r=>r.Bean_REF===beanId);
+  drips.forEach(r=>{
+    if(!S.recipeCache[r.Recipe_ID])
+      GET('getRecipeDetails',{recipeRef:r.Recipe_ID,recipeType:'DRIP'})
+        .then(d=>{S.recipeCache[r.Recipe_ID]=d;}).catch(()=>{});
+  });
+  esps.forEach(r=>{
+    const ck='esp_'+r.Esp_ID;
+    if(!S.recipeCache[ck])
+      GET('getRecipeDetails',{recipeRef:r.Esp_ID,recipeType:'ESPRESSO'})
+        .then(d=>{S.recipeCache[ck]=d;}).catch(()=>{});
+  });
+}  
 async function openDrip(id){
   S.drip=S.allDrips.find(r=>r.Recipe_ID===id);
   if(!S.drip)return;
