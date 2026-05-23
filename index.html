@@ -272,7 +272,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 import { initializeApp }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { initializeFirestore, persistentLocalCache,
-  collection, getDocs, doc, addDoc, updateDoc, deleteDoc }
+  collection, getDocs, getDocsFromCache, doc, addDoc, updateDoc, deleteDoc }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const app = initializeApp({
@@ -287,7 +287,15 @@ const db = initializeFirestore(app, {
   localCache: persistentLocalCache()
 });
 
-const getCol = async name => (await getDocs(collection(db,name))).docs.map(d=>({id:d.id,...d.data()}));
+const toArr = snap => snap.docs.map(d=>({id:d.id,...d.data()}));
+const getCol = async name => toArr(await getDocs(collection(db,name)));
+const getColCache = async name => {
+  try {
+    const snap = await getDocsFromCache(collection(db,name));
+    if(!snap.empty) return toArr(snap);
+  } catch(e){}
+  return getCol(name);
+};
 const docRef = (col,id) => doc(db,col,id);
 
 const S = {
@@ -349,20 +357,27 @@ function toast(msg,err=false){
 async function run(fn){loading(true);try{return await fn();}catch(e){toast('오류: '+e.message,true);}finally{loading(false);}}
 
 // ── Init ──
+async function loadAll(usecache){
+  const g = usecache ? getColCache : getCol;
+  const [ro,be,dr,gr,rd,re] = await Promise.all([
+    g('roasters'),g('beans'),g('drippers'),g('grinders'),
+    g('recipe_drip'),g('recipe_espresso'),
+  ]);
+  S.roasters=ro;S.beans=be;S.drippers=dr;S.grinders=gr;
+  S.allDrips=rd;S.allEsps=re;
+  enrich();S.recipeCache=buildCache(S.allDrips,S.allEsps);
+}
+
 async function initApp(){
   S.stack=[{id:'screen-home',title:'☕ 커피 레시피',opt:{}}];
   showScr('screen-home','☕ 커피 레시피',{});
   history.pushState(null,'');
   await run(async()=>{
-    const [ro,be,dr,gr,rd,re] = await Promise.all([
-      getCol('roasters'),getCol('beans'),getCol('drippers'),getCol('grinders'),
-      getCol('recipe_drip'),getCol('recipe_espresso'),
-    ]);
-    S.roasters=ro;S.beans=be;S.drippers=dr;S.grinders=gr;
-    S.allDrips=rd;S.allEsps=re;
-    enrich();S.recipeCache=buildCache(S.allDrips,S.allEsps);
+    await loadAll(true);   // 캐시에서 즉시 렌더
     renderHome();
   });
+  // 백그라운드에서 서버 동기화
+  loadAll(false).then(()=>{ enrich();S.recipeCache=buildCache(S.allDrips,S.allEsps);renderHome(); }).catch(()=>{});
 }
 
 async function refreshAll(){
