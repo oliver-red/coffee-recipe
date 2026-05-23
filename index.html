@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1c1008">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="커피 레시피">
+<title>커피 레시피</title>
+<link rel="manifest" href="manifest.json">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --bg:       #1c1008;
+  --surface:  #2a1c0f;
+  --card:     #3a2815;
+  --card2:    #452f1a;
+  --primary:  #d4956a;
+  --accent:   #e8b88a;
+  --text:     #f2e8d8;
+  --text-2:   #b89878;
+  --text-3:   #806848;
+  --border:   #4a3020;
+  --danger:   #e05050;
+  --radius:   12px;
+}
+
+html, body { height: 100%; background: var(--bg); color: var(--text);
+  font-family: -apple-system, 'Noto Sans KR', sans-serif; font-size: 16px;
+  line-height: 1.5; overflow: hidden; }
+
+#app { height: 100vh; display: flex; flex-direction: column;
+  max-width: 480px; margin: 0 auto; }
+
+/* ── Header ── */
+#app-header { height: 56px; background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 12px; gap: 8px;
+  flex-shrink: 0; position: relative; z-index: 10; }
+
+.btn-icon { width: 40px; height: 40px; border: none; background: none;
+  color: var(--primary); font-size: 20px; cursor: pointer;
+  border-radius: 8px; display: flex; align-items: center;
+  justify-content: center; flex-shrink: 0; }
+.btn-icon:active { background: var(--card); }
+.btn-icon.hidden { visibility: hidden; pointer-events: none; }
+
+#header-title { flex: 1; text-align: center; font-size: 17px;
+  font-weight: 600; color: var(--text); white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; }
+
+/* ── Screens ── */
+#screens { flex: 1; overflow: hidden; position: relative; }
+
+.screen { position: absolute; inset: 0; overflow-y: auto;
+  -webkit-overflow-scrolling: touch; padding: 16px;
+  display: none; flex-direction: column; gap: 12px; }
+.screen.active { display: flex; }
+
+/* ── Search ── */
+.search-box { position: relative; }
+.search-box input { width: 100%; padding: 12px 16px 12px 42px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); color: var(--text); font-size: 15px; outline: none; }
+.search-box input::placeholder { color: var(--text-3); }
+.search-box input:focus { border-color: var(--primary); }
+.search-icon { position: absolute; left: 13px; top: 50%;
+  transform: translateY(-50%); color: var(--text-3); pointer-events: none; }
+
+/* ── Cards ── */
+.card { background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px 16px; cursor: pointer; }
+.card:active { background: var(--card2); }
+.card-title { font-size: 16px; font-weight: 600; }
+.card-sub { font-size: 13px; color: var(--text-2); margin-top: 3px; }
+.card-row { display: flex; align-items: center; justify-content: space-between; }
+.card-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+
+.tag { padding: 3px 9px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+.tag-roast { background: rgba(212,149,106,.2); color: var(--primary); }
+.tag-hot   { background: rgba(220,80,50,.2);  color: #e07060; }
+.tag-ice   { background: rgba(80,160,220,.2); color: #70b0e0; }
+.tag-esp   { background: rgba(180,120,60,.2); color: #c89060; }
+.tag-deg   { background: rgba(100,100,200,.15); color: #9090d0; }
+
+.section-label { font-size: 12px; font-weight: 700; color: var(--text-3);
+  text-transform: uppercase; letter-spacing: .08em; padding: 4px 0; }
+
+/* ── Bean Detail ── */
+.bean-header { background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px; }
+.bean-name   { font-size: 22px; font-weight: 700; }
+.bean-roaster { font-size: 14px; color: var(--primary); margin-top: 4px; }
+.info-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 12px; }
+.info-item label { font-size: 11px; color: var(--text-3);
+  text-transform: uppercase; letter-spacing: .06em; }
+.info-item span { display: block; font-size: 14px; color: var(--text); margin-top: 2px; }
+.bean-note { margin-top: 10px; padding-top: 10px;
+  border-top: 1px solid var(--border); font-size: 13px; color: var(--text-2); }
+
+/* ── Recipe Card ── */
+.recipe-card { background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px 16px; cursor: pointer; margin-bottom: 8px; }
+.recipe-card:active { background: var(--card2); }
+.recipe-stats { display: flex; gap: 16px; margin-top: 10px; }
+.stat-v { font-size: 18px; font-weight: 700; color: var(--accent); }
+.stat-l { font-size: 11px; color: var(--text-3); }
+
+/* ── Detail Header ── */
+.detail-header { background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px; }
+.detail-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 12px; }
+.detail-item label { font-size: 11px; color: var(--text-3);
+  text-transform: uppercase; letter-spacing: .06em; }
+.detail-item span { display: block; font-size: 17px;
+  font-weight: 700; color: var(--accent); margin-top: 2px; }
+
+/* ── Step / Grinder Lists ── */
+.list-box { background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden; }
+.list-row { display: flex; align-items: center; padding: 12px 16px;
+  border-bottom: 1px solid var(--border); gap: 12px; }
+.list-row:last-child { border-bottom: none; }
+.step-num { width: 26px; height: 26px; background: var(--primary);
+  color: var(--bg); border-radius: 50%; display: flex;
+  align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; flex-shrink: 0; }
+.step-pour { font-size: 18px; font-weight: 700; color: var(--accent); }
+.step-unit { font-size: 12px; color: var(--text-3); }
+.step-time { margin-left: auto; font-size: 14px; color: var(--text-2); }
+.grinder-name  { flex: 1; font-size: 14px; }
+.grinder-clicks { font-size: 20px; font-weight: 700; color: var(--primary); }
+.grinder-unit  { font-size: 12px; color: var(--text-3); }
+
+/* ── Buttons ── */
+.btn-row { display: flex; gap: 10px; }
+.btn { flex: 1; padding: 13px; border: none; border-radius: var(--radius);
+  font-size: 15px; font-weight: 600; cursor: pointer; }
+.btn:active { opacity: .8; }
+.btn-primary   { background: var(--primary); color: var(--bg); }
+.btn-secondary { background: var(--card2); color: var(--text);
+  border: 1px solid var(--border); }
+.btn-danger    { background: rgba(224,80,80,.15); color: var(--danger);
+  border: 1px solid rgba(224,80,80,.3); }
+
+/* ── Forms ── */
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-label { font-size: 13px; font-weight: 600; color: var(--text-2); }
+.form-input, .form-select, .form-textarea {
+  padding: 12px 14px; background: var(--card);
+  border: 1px solid var(--border); border-radius: 10px;
+  color: var(--text); font-size: 15px; outline: none; width: 100%; }
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--primary); }
+.form-select option { background: var(--surface); }
+.form-textarea { resize: none; min-height: 80px; }
+
+.type-toggle { display: flex; background: var(--card);
+  border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.type-btn { flex: 1; padding: 11px; border: none; background: none;
+  color: var(--text-3); font-size: 15px; font-weight: 600; cursor: pointer; }
+.type-btn.hot { background: rgba(220,80,50,.2); color: #e07060; }
+.type-btn.ice { background: rgba(80,160,220,.2); color: #70b0e0; }
+
+/* ── Step Form ── */
+.step-card { background: var(--card2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px; }
+.step-card-header { display: flex; align-items: center;
+  gap: 8px; margin-bottom: 10px; }
+.step-card-num { width: 24px; height: 24px; background: var(--primary);
+  color: var(--bg); border-radius: 50%; display: flex;
+  align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; flex-shrink: 0; }
+.step-card-label { flex: 1; font-size: 13px; font-weight: 600; color: var(--text-2); }
+.step-del { width: 28px; height: 28px; border: none; background: none;
+  color: var(--text-3); font-size: 18px; cursor: pointer;
+  border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+.step-del:active { color: var(--danger); }
+.step-inputs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
+/* ── Grinder Form Row ── */
+.grinder-form-row { display: flex; align-items: center;
+  background: var(--card2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 10px 14px; gap: 12px; }
+.grinder-form-name { flex: 1; font-size: 14px; }
+.grinder-form-input { width: 70px; padding: 8px; background: var(--card);
+  border: 1px solid var(--border); border-radius: 8px;
+  color: var(--text); font-size: 15px; font-weight: 600;
+  text-align: center; outline: none; }
+.grinder-form-input:focus { border-color: var(--primary); }
+
+/* ── Roaster Group ── */
+.roaster-group-label { font-size: 11px; font-weight: 700; color: var(--text-3);
+  text-transform: uppercase; letter-spacing: .1em; padding: 10px 4px 6px; }
+
+/* ── Empty ── */
+.empty { text-align: center; padding: 24px; color: var(--text-3); font-size: 14px; }
+
+/* ── Toast ── */
+#toast { position: fixed; bottom: 28px; left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: #383838; color: #fff; padding: 10px 20px;
+  border-radius: 20px; font-size: 14px; opacity: 0;
+  transition: all .25s; pointer-events: none; white-space: nowrap; z-index: 9999; }
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── Loading ── */
+#loading { display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.5); z-index: 9998;
+  align-items: center; justify-content: center; }
+#loading.show { display: flex; }
+.spinner { width: 40px; height: 40px; border: 3px solid var(--border);
+  border-top-color: var(--primary); border-radius: 50%;
+  animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.pb24 { padding-bottom: 24px; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Header -->
+  <header id="app-header">
+    <button class="btn-icon hidden" id="btn-back" onclick="goBack()">←</button>
+    <h1 id="header-title">☕ 커피 레시피</h1>
+    <button class="btn-icon hidden" id="btn-hdr-edit" onclick="doHdrEdit()">✏️</button>
+  </header>
+
+  <div id="screens">
+
+    <!-- ══ HOME ══ -->
+    <div id="screen-home" class="screen active">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input id="search-input" type="text"
+          placeholder="로스터리 또는 원두 이름 검색..."
+          oninput="onSearch(this.value)" autocomplete="off">
+      </div>
+      <div id="home-list"></div>
+    </div>
+
+    <!-- ══ BEAN DETAIL ══ -->
+    <div id="screen-bean" class="screen">
+      <div id="bean-info" class="bean-header"></div>
+
+      <div class="section-label">드립 레시피</div>
+      <div id="bean-drip-list"></div>
+      <button class="btn btn-secondary" onclick="showDripForm()">+ 드립 레시피 추가</button>
+
+      <div class="section-label" style="margin-top:4px">에스프레소 레시피</div>
+      <div id="bean-esp-list"></div>
+      <button class="btn btn-secondary" onclick="showEspForm()">+ 에스프레소 레시피 추가</button>
+    </div>
+
+    <!-- ══ DRIP DETAIL ══ -->
+    <div id="screen-drip" class="screen">
+      <div id="drip-info" class="detail-header"></div>
+      <div class="section-label">추출 단계</div>
+      <div id="drip-steps" class="list-box"></div>
+      <div id="drip-grinder-wrap">
+        <div class="section-label">그라인더 설정</div>
+        <div id="drip-grinders" class="list-box"></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="editCurrentDrip()">✏️ 수정</button>
+        <button class="btn btn-danger" onclick="deleteCurrentDrip()">🗑 삭제</button>
+      </div>
+    </div>
+
+    <!-- ══ ESPRESSO DETAIL ══ -->
+    <div id="screen-esp" class="screen">
+      <div id="esp-info" class="detail-header"></div>
+      <div id="esp-grinder-wrap">
+        <div class="section-label">그라인더 설정</div>
+        <div id="esp-grinders" class="list-box"></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="editCurrentEsp()">✏️ 수정</button>
+        <button class="btn btn-danger" onclick="deleteCurrentEsp()">🗑 삭제</button>
+      </div>
+    </div>
+
+    <!-- ══ DRIP FORM ══ -->
+    <div id="screen-drip-form" class="screen">
+      <input type="hidden" id="df-id">
+      <div class="form-group">
+        <label class="form-label">드리퍼</label>
+        <select class="form-select" id="df-dripper"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">타입</label>
+        <div class="type-toggle">
+          <button class="type-btn hot" id="tb-hot" onclick="setType('HOT')">☀️ HOT</button>
+          <button class="type-btn"     id="tb-ice" onclick="setType('ICE')">🧊 ICE</button>
+        </div>
+        <input type="hidden" id="df-type" value="HOT">
+      </div>
+      <div class="form-group">
+        <label class="form-label">원두 용량 (g)</label>
+        <input type="text" class="form-input" id="df-dose" placeholder="예: 16, 18-19">
+      </div>
+      <div class="form-group">
+        <label class="form-label">온도 (°C)</label>
+        <input type="text" class="form-input" id="df-temp" placeholder="예: 93, 92-94">
+      </div>
+      <div class="form-group" id="df-ice-wrap" style="display:none">
+        <label class="form-label">얼음 중량 (g)</label>
+        <input type="number" class="form-input" id="df-ice" placeholder="예: 150">
+      </div>
+      <div class="form-group">
+        <label class="form-label">메모</label>
+        <textarea class="form-textarea" id="df-note" placeholder="가수 정보, 기타 메모..."></textarea>
+      </div>
+      <div class="section-label">추출 단계</div>
+      <div id="df-steps" style="display:flex;flex-direction:column;gap:10px"></div>
+      <button class="btn btn-secondary" onclick="addStep()">+ 스텝 추가</button>
+      <div class="section-label" style="margin-top:4px">그라인더 설정 (선택)</div>
+      <div id="df-grinders" style="display:flex;flex-direction:column;gap:8px"></div>
+      <div class="btn-row pb24">
+        <button class="btn btn-secondary" onclick="goBack()">취소</button>
+        <button class="btn btn-primary"   onclick="saveDrip()">저장</button>
+      </div>
+    </div>
+
+    <!-- ══ ESPRESSO FORM ══ -->
+    <div id="screen-esp-form" class="screen">
+      <input type="hidden" id="ef-id">
+      <div class="form-group">
+        <label class="form-label">원두 용량 (g)</label>
+        <input type="text" class="form-input" id="ef-dose" placeholder="예: 18, 18-19">
+      </div>
+      <div class="form-group">
+        <label class="form-label">온도 (°C)</label>
+        <input type="text" class="form-input" id="ef-temp" placeholder="예: 93, 92-94">
+      </div>
+      <div class="form-group">
+        <label class="form-label">수율 (g)</label>
+        <input type="text" class="form-input" id="ef-yield" placeholder="예: 36-42">
+      </div>
+      <div class="form-group">
+        <label class="form-label">추출 시간 (초)</label>
+        <input type="text" class="form-input" id="ef-time" placeholder="예: 28-30">
+      </div>
+      <div class="section-label" style="margin-top:4px">그라인더 설정 (선택)</div>
+      <div id="ef-grinders" style="display:flex;flex-direction:column;gap:8px"></div>
+      <div class="btn-row pb24">
+        <button class="btn btn-secondary" onclick="goBack()">취소</button>
+        <button class="btn btn-primary"   onclick="saveEsp()">저장</button>
+      </div>
+    </div>
+
+    <!-- ══ BEAN FORM ══ -->
+    <div id="screen-bean-form" class="screen">
+      <input type="hidden" id="bf-id">
+      <div class="form-group">
+        <label class="form-label">로스터리</label>
+        <select class="form-select" id="bf-roaster"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">원두 이름</label>
+        <input type="text" class="form-input" id="bf-name" placeholder="원두 이름">
+      </div>
+      <div class="form-group">
+        <label class="form-label">원산지</label>
+        <input type="text" class="form-input" id="bf-origin" placeholder="예: 블렌드, 에티오피아">
+      </div>
+      <div class="form-group">
+        <label class="form-label">로스팅 레벨</label>
+        <select class="form-select" id="bf-roast">
+          <option value="">선택</option>
+          <option>라이트</option>
+          <option>미디엄 라이트</option>
+          <option>미디엄</option>
+          <option>미디엄 다크</option>
+          <option>다크</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">디게싱 기간</label>
+        <input type="text" class="form-input" id="bf-deg" placeholder="예: 5-7일, 3일 이상">
+      </div>
+      <div class="form-group">
+        <label class="form-label">비고</label>
+        <textarea class="form-textarea" id="bf-note" placeholder="기타 정보..."></textarea>
+      </div>
+      <div class="btn-row pb24">
+        <button class="btn btn-secondary" onclick="goBack()">취소</button>
+        <button class="btn btn-primary"   onclick="saveBean()">저장</button>
+      </div>
+    </div>
+
+  </div><!-- /screens -->
+</div><!-- /app -->
+
+<div id="toast"></div>
+<div id="loading"><div class="spinner"></div></div>
+
+<script>
+// ══════════════════════════════════════
+// ★ 여기에 본인의 API URL을 붙여넣으세요
+https://script.google.com/macros/s/AKfycbxb_yNsLh20Sf9kTsyYH9wMd-ZbIjQ14QUA8QiHHATbFJXKM6zQF5uiiBBSSgL0b2lKRg/exec
+// ══════════════════════════════════════
+
+// ── State ──
+const S = {
+  stack: [],
+  roasters: [], drippers: [], grinders: [],
+  bean: null,   // 현재 열린 원두
+  drip: null,   // 현재 열린 드립 레시피
+  esp:  null,   // 현재 열린 에스프레소 레시피
+  hdrEditFn: null,
+  stepSeq: 0,
+};
+
+// ── Navigation ──
+function showScr(id, title, opt = {}) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.getElementById(id).scrollTop = 0;
+  document.getElementById('header-title').textContent = title;
+  const back = document.getElementById('btn-back');
+  const edit = document.getElementById('btn-hdr-edit');
+  back.classList.toggle('hidden', !opt.back);
+  edit.classList.toggle('hidden', !opt.edit);
+  S.hdrEditFn = opt.edit || null;
+}
+
+function pushScr(id, title, opt = {}) {
+  S.stack.push({ id, title, opt });
+  showScr(id, title, opt);
+}
+
+function doHdrEdit() { S.hdrEditFn && S.hdrEditFn(); }
+
+function goBack() {
+  if (S.stack.length < 2) return;
+  S.stack.pop();
+  const prev = S.stack[S.stack.length - 1];
+  showScr(prev.id, prev.title, prev.opt);
+  if (prev.id === 'screen-bean' && S.bean) loadBeanDetail(S.bean.Bean_ID);
+  if (prev.id === 'screen-home') loadHome();
+}
+
+// ── API ──
+async function GET(action, params = {}) {
+  const url = new URL(API_URL);
+  url.searchParams.set('action', action);
+  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+  const r = await fetch(url.toString());
+  const d = await r.json();
+  if (d && d.error) throw new Error(d.error);
+  return d;
+}
+
+async function POST(action, body = {}) {
+  const r = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({ action, ...body }),
+    redirect: 'follow',
+  });
+  const d = await r.json();
+  if (d && d.error) throw new Error(d.error);
+  return d;
+}
+
+// ── Loading / Toast ──
+function loading(on) {
+  document.getElementById('loading').classList.toggle('show', on);
+}
+
+let _tt;
+function toast(msg, err = false) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.background = err ? '#b03030' : '#383838';
+  el.classList.add('show');
+  clearTimeout(_tt);
+  _tt = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+async function run(fn) {
+  loading(true);
+  try { return await fn(); }
+  catch (e) { toast('오류: ' + e.message, true); }
+  finally { loading(false); }
+}
+
+// ══════════════════════════════════════
+// HOME
+// ══════════════════════════════════════
+async function initApp() {
+  S.stack = [{ id: 'screen-home', title: '☕ 커피 레시피', opt: {} }];
+  showScr('screen-home', '☕ 커피 레시피', {});
+  await run(async () => {
+    [S.roasters, S.drippers, S.grinders] = await Promise.all([
+      GET('getRoasters'), GET('getDrippers'), GET('getGrinders'),
+    ]);
+    await loadHome();
+  });
+}
+
+async function loadHome() {
+  const el = document.getElementById('home-list');
+  el.innerHTML = '';
+  const beans = await GET('getBeans');
+  // 로스터별 그룹핑
+  const map = {};
+  S.roasters.forEach(r => { map[r.Roaster_ID] = { name: r.Roaster_Name, beans: [] }; });
+  beans.forEach(b => { if (map[b.Roaster_REF]) map[b.Roaster_REF].beans.push(b); });
+
+  let html = '';
+  Object.values(map).forEach(g => {
+    if (!g.beans.length) return;
+    html += `<div class="roaster-group-label">${g.name}</div>`;
+    g.beans.forEach(b => { html += beanCardHTML(b, true); });
+  });
+  html += `<button class="btn btn-secondary" style="margin-top:8px" onclick="showBeanForm()">+ 원두 추가</button>`;
+  el.innerHTML = html;
+}
+
+function beanCardHTML(b, showSub = false) {
+  const roast = b.Roast_Level ? `<span class="tag tag-roast">${b.Roast_Level}</span>` : '';
+  const deg   = b.Degassing_Days ? `<span class="tag tag-deg">⏱ ${b.Degassing_Days}</span>` : '';
+  const sub   = showSub && b.Roaster_Name ? `<div class="card-sub">${b.Roaster_Name}</div>` : '';
+  return `<div class="card" style="margin-bottom:8px" onclick="openBean('${b.Bean_ID}')">
+    <div class="card-title">${b.Bean_Name}</div>${sub}
+    <div class="card-tags">${roast}${deg}</div></div>`;
+}
+
+let _st;
+function onSearch(v) {
+  clearTimeout(_st);
+  const el = document.getElementById('home-list');
+  if (!v.trim()) { loadHome(); return; }
+  _st = setTimeout(async () => {
+    loading(true);
+    try {
+      const beans = await GET('getBeans', { search: v });
+      if (!beans.length) { el.innerHTML = '<div class="empty">검색 결과 없음</div>'; return; }
+      el.innerHTML = beans.map(b => beanCardHTML(b, true)).join('');
+    } catch(e) { toast(e.message, true); }
+    finally { loading(false); }
+  }, 400);
+}
+
+// ══════════════════════════════════════
+// BEAN DETAIL
+// ══════════════════════════════════════
+async function openBean(id) {
+  await run(async () => {
+    S.bean = await GET('getBean', { id });
+    pushScr('screen-bean', S.bean.Bean_Name, {
+      back: true, edit: () => showBeanForm(S.bean.Bean_ID),
+    });
+    await loadBeanDetail(id);
+  });
+}
+
+async function loadBeanDetail(id) {
+  const b = S.bean = await GET('getBean', { id });
+  const roaster = S.roasters.find(r => r.Roaster_ID === b.Roaster_REF);
+
+  document.getElementById('bean-info').innerHTML = `
+    <div class="bean-name">${b.Bean_Name}</div>
+    <div class="bean-roaster">${roaster ? roaster.Roaster_Name : ''}</div>
+    <div class="info-grid">
+      <div class="info-item"><label>원산지</label><span>${b.Origin || '-'}</span></div>
+      <div class="info-item"><label>로스팅</label><span>${b.Roast_Level || '-'}</span></div>
+      <div class="info-item"><label>디게싱</label><span>${b.Degassing_Days || '-'}</span></div>
+    </div>
+    ${(b.New_Note || b.Note) ? `<div class="bean-note">${b.New_Note || b.Note}</div>` : ''}`;
+
+  const [drips, esps] = await Promise.all([
+    GET('getRecipeDrip', { beanRef: id }),
+    GET('getRecipeEspresso', { beanRef: id }),
+  ]);
+
+  const de = document.getElementById('bean-drip-list');
+  de.innerHTML = drips.length ? drips.map(r => `
+    <div class="recipe-card" onclick="openDrip('${r.Recipe_ID}')">
+      <div class="card-row">
+        <span style="font-weight:600">${r.Dripper_Name || r.Dripper_REF}</span>
+        <span class="tag ${r.Type==='ICE'?'tag-ice':'tag-hot'}">${r.Type}</span>
+      </div>
+      <div class="recipe-stats">
+        <div><div class="stat-v">${r.Dose_g}</div><div class="stat-l">g</div></div>
+        <div><div class="stat-v">${r.Temp_c}</div><div class="stat-l">°C</div></div>
+        <div><div class="stat-v">${r.Total_Pour||'-'}</div><div class="stat-l">ml</div></div>
+      </div>
+    </div>`).join('')
+    : '<div class="empty">레시피 없음</div>';
+
+  const ee = document.getElementById('bean-esp-list');
+  ee.innerHTML = esps.length ? esps.map(r => `
+    <div class="recipe-card" onclick="openEsp('${r.Esp_ID}')">
+      <div class="card-row">
+        <span style="font-weight:600">에스프레소</span>
+        <span class="tag tag-esp">ESP</span>
+      </div>
+      <div class="recipe-stats">
+        <div><div class="stat-v">${r.Dose_g}</div><div class="stat-l">Dose</div></div>
+        <div><div class="stat-v">${r.Yield_g}</div><div class="stat-l">Yield</div></div>
+        <div><div class="stat-v">${r.Time_Sec}</div><div class="stat-l">Sec</div></div>
+      </div>
+    </div>`).join('')
+    : '<div class="empty">레시피 없음</div>';
+}
+
+// ══════════════════════════════════════
+// DRIP DETAIL
+// ══════════════════════════════════════
+async function openDrip(id) {
+  await run(async () => {
+    const [drips, steps, gs] = await Promise.all([
+      GET('getRecipeDrip', { beanRef: S.bean.Bean_ID }),
+      GET('getRecipeSteps', { recipeRef: id }),
+      GET('getGrinderSettings', { recipeRef: id, recipeType: 'DRIP' }),
+    ]);
+    S.drip = drips.find(r => r.Recipe_ID === id);
+    const r = S.drip;
+    pushScr('screen-drip', `${r.Dripper_Name} ${r.Type}`, { back: true });
+
+    document.getElementById('drip-info').innerHTML = `
+      <div class="card-row">
+        <span style="font-size:18px;font-weight:700">${r.Dripper_Name}</span>
+        <span class="tag ${r.Type==='ICE'?'tag-ice':'tag-hot'}">${r.Type}</span>
+      </div>
+      <div class="detail-grid">
+        <div class="detail-item"><label>원두</label><span>${r.Dose_g}g</span></div>
+        <div class="detail-item"><label>온도</label><span>${r.Temp_c}°C</span></div>
+        <div class="detail-item"><label>총 물량</label><span>${r.Total_Pour||'-'}ml</span></div>
+        ${r.Ice_g ? `<div class="detail-item"><label>얼음</label><span>${r.Ice_g}g</span></div>` : ''}
+      </div>
+      ${r.Note ? `<div class="bean-note" style="margin-top:10px">${r.Note}</div>` : ''}`;
+
+    document.getElementById('drip-steps').innerHTML = steps.length
+      ? steps.map(s => {
+          const t = (s.Time_Min ? s.Time_Min+'분 ' : '') + (s.Time_Sec ? s.Time_Sec+'초' : '');
+          return `<div class="list-row">
+            <div class="step-num">${s.Step_Num}</div>
+            <div><span class="step-pour">${s.Pour_g}</span><span class="step-unit"> g</span></div>
+            ${t ? `<div class="step-time">⏱ ${t.trim()}</div>` : ''}
+          </div>`;
+        }).join('')
+      : '<div class="empty">스텝 없음</div>';
+
+    const gw = document.getElementById('drip-grinder-wrap');
+    if (!gs.length) { gw.style.display = 'none'; }
+    else {
+      gw.style.display = 'block';
+      document.getElementById('drip-grinders').innerHTML = gs.map(g =>
+        `<div class="list-row">
+          <span class="grinder-name">${g.Grinder_Name}</span>
+          <span class="grinder-clicks">${g.Clicks}</span>
+          <span class="grinder-unit"> 클릭</span>
+        </div>`).join('');
+    }
+  });
+}
+
+function editCurrentDrip() { S.drip && showDripForm(S.drip.Recipe_ID); }
+
+async function deleteCurrentDrip() {
+  if (!confirm('이 드립 레시피를 삭제할까요?')) return;
+  await run(async () => {
+    await POST('deleteRecipeDrip', { id: S.drip.Recipe_ID });
+    toast('삭제되었습니다');
+    S.stack.splice(-2, 2); // 2단계 뒤로
+    const prev = S.stack[S.stack.length - 1];
+    showScr(prev.id, prev.title, prev.opt);
+    await loadBeanDetail(S.bean.Bean_ID);
+  });
+}
+
+// ══════════════════════════════════════
+// ESPRESSO DETAIL
+// ══════════════════════════════════════
+async function openEsp(id) {
+  await run(async () => {
+    const [esps, gs] = await Promise.all([
+      GET('getRecipeEspresso', { beanRef: S.bean.Bean_ID }),
+      GET('getGrinderSettings', { recipeRef: id, recipeType: 'ESPRESSO' }),
+    ]);
+    S.esp = esps.find(r => r.Esp_ID === id);
+    const r = S.esp;
+    pushScr('screen-esp', '에스프레소', { back: true });
+
+    document.getElementById('esp-info').innerHTML = `
+      <div class="card-row">
+        <span style="font-size:18px;font-weight:700">에스프레소</span>
+        <span class="tag tag-esp">ESP</span>
+      </div>
+      <div class="detail-grid">
+        <div class="detail-item"><label>Dose</label><span>${r.Dose_g}g</span></div>
+        <div class="detail-item"><label>온도</label><span>${r.Temp_c}°C</span></div>
+        <div class="detail-item"><label>Yield</label><span>${r.Yield_g}g</span></div>
+        <div class="detail-item"><label>시간</label><span>${r.Time_Sec}초</span></div>
+      </div>`;
+
+    const gw = document.getElementById('esp-grinder-wrap');
+    if (!gs.length) { gw.style.display = 'none'; }
+    else {
+      gw.style.display = 'block';
+      document.getElementById('esp-grinders').innerHTML = gs.map(g =>
+        `<div class="list-row">
+          <span class="grinder-name">${g.Grinder_Name}</span>
+          <span class="grinder-clicks">${g.Clicks}</span>
+          <span class="grinder-unit"> 클릭</span>
+        </div>`).join('');
+    }
+  });
+}
+
+function editCurrentEsp() { S.esp && showEspForm(S.esp.Esp_ID); }
+
+async function deleteCurrentEsp() {
+  if (!confirm('이 에스프레소 레시피를 삭제할까요?')) return;
+  await run(async () => {
+    await POST('deleteRecipeEspresso', { id: S.esp.Esp_ID });
+    toast('삭제되었습니다');
+    S.stack.splice(-2, 2);
+    const prev = S.stack[S.stack.length - 1];
+    showScr(prev.id, prev.title, prev.opt);
+    await loadBeanDetail(S.bean.Bean_ID);
+  });
+}
+
+// ══════════════════════════════════════
+// DRIP FORM
+// ══════════════════════════════════════
+async function showDripForm(id = null) {
+  pushScr('screen-drip-form', id ? '드립 레시피 수정' : '드립 레시피 추가', { back: true });
+
+  // 드리퍼 셀렉트
+  document.getElementById('df-dripper').innerHTML =
+    S.drippers.map(d => `<option value="${d.Dripper_ID}">${d.Dripper_Name}</option>`).join('');
+
+  // 초기화
+  ['df-id','df-dose','df-temp','df-ice','df-note'].forEach(i => {
+    document.getElementById(i).value = '';
+  });
+  setType('HOT');
+  document.getElementById('df-steps').innerHTML = '';
+  S.stepSeq = 0;
+  renderGrinderForm('df-grinders', []);
+
+  if (id) {
+    await run(async () => {
+      const [drips, steps, gs] = await Promise.all([
+        GET('getRecipeDrip', { beanRef: S.bean.Bean_ID }),
+        GET('getRecipeSteps', { recipeRef: id }),
+        GET('getGrinderSettings', { recipeRef: id, recipeType: 'DRIP' }),
+      ]);
+      const r = drips.find(x => x.Recipe_ID === id);
+      if (!r) return;
+      document.getElementById('df-id').value   = r.Recipe_ID;
+      document.getElementById('df-dripper').value = r.Dripper_REF;
+      setType(r.Type || 'HOT');
+      document.getElementById('df-dose').value = r.Dose_g || '';
+      document.getElementById('df-temp').value = r.Temp_c || '';
+      document.getElementById('df-ice').value  = r.Ice_g  || '';
+      document.getElementById('df-note').value = r.Note   || '';
+      steps.forEach(s => addStep(s));
+      renderGrinderForm('df-grinders', gs);
+    });
+  }
+}
+
+function setType(t) {
+  document.getElementById('df-type').value = t;
+  document.getElementById('tb-hot').className = 'type-btn' + (t==='HOT' ? ' hot' : '');
+  document.getElementById('tb-ice').className = 'type-btn' + (t==='ICE' ? ' ice' : '');
+  document.getElementById('df-ice-wrap').style.display = t==='ICE' ? 'flex' : 'none';
+}
+
+function addStep(data = null) {
+  S.stepSeq++;
+  const sid = 'sc-' + S.stepSeq;
+  const el  = document.getElementById('df-steps');
+  const num = el.children.length + 1;
+  const d   = document.createElement('div');
+  d.className = 'step-card'; d.id = sid;
+  d.innerHTML = `
+    <div class="step-card-header">
+      <div class="step-card-num">${num}</div>
+      <div class="step-card-label">스텝 ${num}</div>
+      <button class="step-del" onclick="removeStep('${sid}')">✕</button>
+    </div>
+    <div class="step-inputs">
+      <div class="form-group"><label class="form-label">물량(g)</label>
+        <input type="number" class="form-input sp-pour" value="${data?data.Pour_g:''}"></div>
+      <div class="form-group"><label class="form-label">분</label>
+        <input type="number" class="form-input sp-min" value="${data&&data.Time_Min?data.Time_Min:''}"></div>
+      <div class="form-group"><label class="form-label">초</label>
+        <input type="number" class="form-input sp-sec" value="${data&&data.Time_Sec?data.Time_Sec:''}"></div>
+    </div>`;
+  el.appendChild(d);
+}
+
+function removeStep(sid) {
+  document.getElementById(sid)?.remove();
+  const el = document.getElementById('df-steps');
+  Array.from(el.children).forEach((c, i) => {
+    c.querySelector('.step-card-num').textContent = i + 1;
+    c.querySelector('.step-card-label').textContent = `스텝 ${i + 1}`;
+  });
+}
+
+function renderGrinderForm(containerId, existing) {
+  const map = {};
+  existing.forEach(s => { map[s.Grinder_REF] = s.Clicks; });
+  document.getElementById(containerId).innerHTML = S.grinders.map(g => `
+    <div class="grinder-form-row">
+      <span class="grinder-form-name">${g.Grinder_Name}</span>
+      <input type="number" class="grinder-form-input"
+        id="${containerId}-${g.GRN_ID}"
+        placeholder="-" value="${map[g.GRN_ID] || ''}">
+      <span class="grinder-unit">클릭</span>
+    </div>`).join('');
+}
+
+function collectGrinders(containerId) {
+  return S.grinders.map(g => {
+    const v = document.getElementById(`${containerId}-${g.GRN_ID}`)?.value;
+    return v ? { Grinder_REF: g.GRN_ID, Clicks: Number(v) } : null;
+  }).filter(Boolean);
+}
+
+async function saveDrip() {
+  const id    = document.getElementById('df-id').value;
+  const steps = Array.from(document.getElementById('df-steps').children).map(c => ({
+    Pour_g:   Number(c.querySelector('.sp-pour').value) || 0,
+    Time_Min: Number(c.querySelector('.sp-min').value)  || 0,
+    Time_Sec: Number(c.querySelector('.sp-sec').value)  || 0,
+  }));
+  if (!steps.length) { toast('스텝을 1개 이상 추가하세요', true); return; }
+
+  const data = {
+    Bean_REF:    S.bean.Bean_ID,
+    Dripper_REF: document.getElementById('df-dripper').value,
+    Type:        document.getElementById('df-type').value,
+    Dose_g:      document.getElementById('df-dose').value,
+    Temp_c:      document.getElementById('df-temp').value,
+    Ice_g:       document.getElementById('df-ice').value || '',
+    Note:        document.getElementById('df-note').value,
+    Total_Pour:  steps.reduce((s, x) => s + x.Pour_g, 0),
+  };
+  const gs = collectGrinders('df-grinders');
+
+  await run(async () => {
+    let rid = id;
+    if (id) { await POST('updateRecipeDrip', { data: { ...data, Recipe_ID: id } }); }
+    else     { const r = await POST('addRecipeDrip', { data }); rid = r.id; }
+    await Promise.all([
+      POST('saveRecipeSteps', { recipeRef: rid, steps }),
+      POST('saveGrinderSettings', { recipeRef: rid, recipeType: 'DRIP', settings: gs }),
+    ]);
+    toast('저장되었습니다 ✓');
+    goBack();
+  });
+}
+
+// ══════════════════════════════════════
+// ESPRESSO FORM
+// ══════════════════════════════════════
+async function showEspForm(id = null) {
+  pushScr('screen-esp-form', id ? '에스프레소 수정' : '에스프레소 추가', { back: true });
+  ['ef-id','ef-dose','ef-temp','ef-yield','ef-time'].forEach(i => {
+    document.getElementById(i).value = '';
+  });
+  renderGrinderForm('ef-grinders', []);
+
+  if (id) {
+    await run(async () => {
+      const [esps, gs] = await Promise.all([
+        GET('getRecipeEspresso', { beanRef: S.bean.Bean_ID }),
+        GET('getGrinderSettings', { recipeRef: id, recipeType: 'ESPRESSO' }),
+      ]);
+      const r = esps.find(x => x.Esp_ID === id);
+      if (!r) return;
+      document.getElementById('ef-id').value    = r.Esp_ID;
+      document.getElementById('ef-dose').value  = r.Dose_g  || '';
+      document.getElementById('ef-temp').value  = r.Temp_c  || '';
+      document.getElementById('ef-yield').value = r.Yield_g || '';
+      document.getElementById('ef-time').value  = r.Time_Sec|| '';
+      renderGrinderForm('ef-grinders', gs);
+    });
+  }
+}
+
+async function saveEsp() {
+  const id   = document.getElementById('ef-id').value;
+  const data = {
+    Bean_REF: S.bean.Bean_ID,
+    Dose_g:   document.getElementById('ef-dose').value,
+    Temp_c:   document.getElementById('ef-temp').value,
+    Yield_g:  document.getElementById('ef-yield').value,
+    Time_Sec: document.getElementById('ef-time').value,
+  };
+  const gs = collectGrinders('ef-grinders');
+  await run(async () => {
+    let rid = id;
+    if (id) { await POST('updateRecipeEspresso', { data: { ...data, Esp_ID: id } }); }
+    else     { const r = await POST('addRecipeEspresso', { data }); rid = r.id; }
+    await POST('saveGrinderSettings', { recipeRef: rid, recipeType: 'ESPRESSO', settings: gs });
+    toast('저장되었습니다 ✓');
+    goBack();
+  });
+}
+
+// ══════════════════════════════════════
+// BEAN FORM
+// ══════════════════════════════════════
+async function showBeanForm(id = null) {
+  pushScr('screen-bean-form', id ? '원두 수정' : '원두 추가', { back: true });
+  document.getElementById('bf-roaster').innerHTML =
+    S.roasters.map(r => `<option value="${r.Roaster_ID}">${r.Roaster_Name}</option>`).join('');
+  ['bf-id','bf-name','bf-origin','bf-deg','bf-note'].forEach(i => {
+    document.getElementById(i).value = '';
+  });
+  document.getElementById('bf-roast').value = '';
+
+  if (id) {
+    await run(async () => {
+      const b = await GET('getBean', { id });
+      if (!b) return;
+      document.getElementById('bf-id').value      = b.Bean_ID;
+      document.getElementById('bf-roaster').value = b.Roaster_REF;
+      document.getElementById('bf-name').value    = b.Bean_Name || '';
+      document.getElementById('bf-origin').value  = b.Origin    || '';
+      document.getElementById('bf-roast').value   = b.Roast_Level || '';
+      document.getElementById('bf-deg').value     = b.Degassing_Days || '';
+      document.getElementById('bf-note').value    = b.New_Note || b.Note || '';
+    });
+  }
+}
+
+async function saveBean() {
+  const id   = document.getElementById('bf-id').value;
+  const name = document.getElementById('bf-name').value.trim();
+  if (!name) { toast('원두 이름을 입력하세요', true); return; }
+  const data = {
+    Roaster_REF:    document.getElementById('bf-roaster').value,
+    Bean_Name:      name,
+    Origin:         document.getElementById('bf-origin').value,
+    Roast_Level:    document.getElementById('bf-roast').value,
+    Degassing_Days: document.getElementById('bf-deg').value,
+    New_Note:       document.getElementById('bf-note').value,
+  };
+  await run(async () => {
+    if (id) { await POST('updateBean', { data: { ...data, Bean_ID: id } }); }
+    else    { await POST('addBean', { data }); }
+    toast('저장되었습니다 ✓');
+    goBack();
+  });
+}
+
+// ── Service Worker ──
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+
+// ── Start ──
+initApp();
+</script>
+</body>
+</html>
