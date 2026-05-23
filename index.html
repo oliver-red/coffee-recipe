@@ -131,7 +131,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 .roaster-group-label:active{color:var(--primary);}
 .empty{text-align:center;padding:24px;color:var(--text-3);font-size:14px;
   background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow-sm);}
-/* ── 이미지 갤러리 ── */
+/* ── 폼 이미지 갤러리 ── */
 .img-gallery{display:flex;flex-wrap:wrap;gap:8px;}
 .gallery-thumb{position:relative;width:80px;height:80px;border-radius:10px;overflow:hidden;flex-shrink:0;}
 .gallery-thumb img{width:100%;height:100%;object-fit:cover;}
@@ -142,19 +142,32 @@ html,body{height:100%;background:var(--bg);color:var(--text);
   background:var(--card2);color:var(--text-3);font-size:28px;cursor:pointer;
   display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .img-add-btn:active{border-color:var(--primary);color:var(--primary);}
-/* ── 상세 이미지 그리드 ── */
+/* ── 상세 이미지 그리드 (항상 맨 아래) ── */
 .detail-img-section{display:none;}
 .detail-img-grid{display:flex;flex-wrap:wrap;gap:8px;}
 .detail-img-thumb{flex:1;min-width:120px;max-width:calc(50% - 4px);
   height:160px;object-fit:cover;border-radius:12px;box-shadow:var(--shadow);cursor:pointer;}
-/* ── 이미지 전체화면 뷰어 ── */
-#img-viewer{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);
-  z-index:9997;align-items:center;justify-content:center;}
-#img-viewer.show{display:flex;}
-#img-viewer img{max-width:100%;max-height:100%;object-fit:contain;}
-#img-viewer-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.2);
-  border:none;color:#fff;width:44px;height:44px;border-radius:50%;
-  font-size:22px;cursor:pointer;}
+/* ── 갤러리 뷰어 (핀치 줌 + 스와이프) ── */
+#gallery-viewer{display:none;position:fixed;inset:0;background:#000;
+  z-index:9997;flex-direction:column;}
+#gallery-viewer.show{display:flex;}
+#gallery-viewer-wrap{flex:1;display:flex;align-items:center;justify-content:center;
+  overflow:hidden;position:relative;}
+#gallery-viewer-img{max-width:100%;max-height:100%;object-fit:contain;
+  transform-origin:center center;user-select:none;-webkit-user-drag:none;
+  transition:none;}
+#gallery-viewer-close{position:absolute;top:16px;right:16px;
+  background:rgba(255,255,255,.2);border:none;color:#fff;
+  width:44px;height:44px;border-radius:50%;font-size:22px;cursor:pointer;z-index:1;}
+#gallery-viewer-counter{position:absolute;bottom:16px;left:50%;
+  transform:translateX(-50%);color:rgba(255,255,255,.8);
+  font-size:14px;font-weight:600;background:rgba(0,0,0,.4);
+  padding:4px 12px;border-radius:20px;}
+#gallery-viewer-prev,#gallery-viewer-next{position:absolute;top:50%;transform:translateY(-50%);
+  background:rgba(255,255,255,.2);border:none;color:#fff;
+  width:40px;height:40px;border-radius:50%;font-size:18px;cursor:pointer;}
+#gallery-viewer-prev{left:12px;}
+#gallery-viewer-next{right:12px;}
 #toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(10px);
   background:#222;color:#fff;padding:11px 22px;border-radius:24px;font-size:14px;font-weight:500;
   opacity:0;transition:all .25s;pointer-events:none;white-space:nowrap;z-index:9999;
@@ -195,7 +208,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);
       <div id="roaster-info" class="bean-header"></div>
       <div class="section-label">원두 목록</div>
       <div id="roaster-bean-list"></div>
-      <div class="section-label">사진</div>
+      <div class="section-label" id="roaster-img-label" style="display:none">사진</div>
       <div id="roaster-images" class="detail-img-section"></div>
     </div>
 
@@ -227,7 +240,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);
       <div class="section-label" style="margin-top:4px">에스프레소 레시피</div>
       <div id="bean-esp-list"></div>
       <button class="btn btn-secondary" onclick="showEspForm()">+ 에스프레소 레시피 추가</button>
-      <div class="section-label">사진</div>
+      <div class="section-label" id="bean-img-label" style="display:none">사진</div>
       <div id="bean-images" class="detail-img-section"></div>
     </div>
 
@@ -244,7 +257,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);
         <button class="btn btn-secondary" onclick="editCurrentDrip()">✏️ 수정</button>
         <button class="btn btn-danger" onclick="deleteCurrentDrip()">🗑 삭제</button>
       </div>
-      <div class="section-label">사진</div>
+      <div class="section-label" id="drip-img-label" style="display:none">사진</div>
       <div id="drip-images" class="detail-img-section"></div>
     </div>
 
@@ -259,7 +272,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);
         <button class="btn btn-secondary" onclick="editCurrentEsp()">✏️ 수정</button>
         <button class="btn btn-danger" onclick="deleteCurrentEsp()">🗑 삭제</button>
       </div>
-      <div class="section-label">사진</div>
+      <div class="section-label" id="esp-img-label" style="display:none">사진</div>
       <div id="esp-images" class="detail-img-section"></div>
     </div>
 
@@ -332,8 +345,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);
         <select class="form-select" id="bf-roaster"></select></div>
       <div class="form-group"><label class="form-label">원두 이름</label>
         <input type="text" class="form-input" id="bf-name" placeholder="원두 이름"></div>
-      <div class="form-group"><label class="form-label">S/Blend</label>
-        <input type="text" class="form-input" id="bf-origin" placeholder="예: 싱글오리진, 블렌드, 에티오피아"></div>
+      <div class="form-group"><label class="form-label">원산지</label>
+        <input type="text" class="form-input" id="bf-origin" placeholder="예: 블렌드, 에티오피아"></div>
       <div class="form-group"><label class="form-label">로스팅 레벨</label>
         <select class="form-select" id="bf-roast">
           <option value="">선택</option>
@@ -359,10 +372,15 @@ html,body{height:100%;background:var(--bg);color:var(--text);
   </div>
 </div>
 
-<!-- 이미지 전체화면 뷰어 -->
-<div id="img-viewer" onclick="closeViewer()">
-  <img id="img-viewer-img" src="">
-  <button id="img-viewer-close" onclick="closeViewer()">✕</button>
+<!-- 갤러리 뷰어 -->
+<div id="gallery-viewer">
+  <div id="gallery-viewer-wrap">
+    <img id="gallery-viewer-img" src="">
+    <button id="gallery-viewer-close" onclick="closeGallery()">✕</button>
+    <button id="gallery-viewer-prev" onclick="galleryPrev()">‹</button>
+    <button id="gallery-viewer-next" onclick="galleryNext()">›</button>
+    <div id="gallery-viewer-counter"></div>
+  </div>
 </div>
 
 <div id="toast"></div>
@@ -385,19 +403,17 @@ const app = initializeApp({
   appId:"1:343760449387:web:5162292ce1b32a28f3262e"
 });
 const db = initializeFirestore(app,{localCache:persistentLocalCache()});
-
-const toArr = s => s.docs.map(d=>({id:d.id,...d.data()}));
-const getCol = async n => toArr(await getDocs(collection(db,n)));
-const getColCache = async n => {
+const toArr = s=>s.docs.map(d=>({id:d.id,...d.data()}));
+const getCol = async n=>toArr(await getDocs(collection(db,n)));
+const getColCache = async n=>{
   try{const s=await getDocsFromCache(collection(db,n));if(!s.empty)return toArr(s);}catch(e){}
   return getCol(n);
 };
-const docRef = (c,id) => doc(db,c,id);
+const docRef=(c,id)=>doc(db,c,id);
+const CLOUD='https://api.cloudinary.com/v1_1/dd6ughqua/image/upload';
+const PRESET='coffee_recipe';
 
-const CLOUDINARY = 'https://api.cloudinary.com/v1_1/dd6ughqua/image/upload';
-const PRESET = 'coffee_recipe';
-
-const S = {
+const S={
   stack:[],hdrEditFn:null,stepSeq:0,dirty:false,
   roasters:[],drippers:[],grinders:[],
   beans:[],allDrips:[],allEsps:[],
@@ -405,13 +421,11 @@ const S = {
   roaster:null,bean:null,drip:null,esp:null,
 };
 
-// 구버전 image_url(단일) → image_urls(배열) 호환
 function getImgUrls(item){
   if(item.image_urls&&item.image_urls.length)return item.image_urls;
   if(item.image_url)return[item.image_url];
   return[];
 }
-
 function buildCache(drips,esps){
   const c={};
   drips.forEach(r=>{c[r.id]={steps:r.steps||[],grinder_settings:r.grinder_settings||[]};});
@@ -464,7 +478,7 @@ async function run(fn){loading(true);try{return await fn();}catch(e){toast('오�
 // ── 이미지 업로드 ──
 async function uploadImg(file){
   const fd=new FormData();fd.append('file',file);fd.append('upload_preset',PRESET);
-  const res=await fetch(CLOUDINARY,{method:'POST',body:fd});
+  const res=await fetch(CLOUD,{method:'POST',body:fd});
   const d=await res.json();
   if(d.error)throw new Error(d.error.message);
   return d.secure_url;
@@ -472,25 +486,19 @@ async function uploadImg(file){
 function triggerImg(field){document.getElementById(field+'-img-file').click();}
 async function onImgPick(field,input){
   const files=Array.from(input.files);if(!files.length)return;
-  input.value='';
-  loading(true);
+  input.value='';loading(true);
   try{
     const urls=JSON.parse(document.getElementById(field+'-img-urls').value||'[]');
-    for(const file of files){
-      const url=await uploadImg(file);
-      urls.push(url);
-    }
+    for(const file of files){urls.push(await uploadImg(file));}
     document.getElementById(field+'-img-urls').value=JSON.stringify(urls);
-    renderGallery(field,urls);
-    toast('업로드 완료 ✓');
+    renderGallery(field,urls);toast('업로드 완료 ✓');
   }catch(e){toast('업로드 실패: '+e.message,true);}
   finally{loading(false);}
 }
 function renderGallery(field,urls){
-  const el=document.getElementById(field+'-gallery');
-  el.innerHTML=urls.map((u,i)=>`
+  document.getElementById(field+'-gallery').innerHTML=urls.map((u,i)=>`
     <div class="gallery-thumb">
-      <img src="${u}" onclick="viewImg('${u}')">
+      <img src="${u}" onclick="openGallery(${JSON.stringify(urls).replace(/"/g,'&quot;')},${i})">
       <button class="gallery-del" onclick="removeImg('${field}',${i})">✕</button>
     </div>`).join('');
 }
@@ -504,18 +512,98 @@ function setImgUrls(field,urls){
   document.getElementById(field+'-img-urls').value=JSON.stringify(urls||[]);
   renderGallery(field,urls||[]);
 }
-function renderDetailImgs(elId,urls){
-  const el=document.getElementById(elId);
-  if(!urls||!urls.length){el.style.display='none';return;}
-  el.style.display='block';
-  el.innerHTML=`<div class="detail-img-grid">${urls.map(u=>
-    `<img src="${u}" class="detail-img-thumb" onclick="viewImg('${u}')">`).join('')}</div>`;
+
+// ── 상세 이미지 렌더 (항상 맨 아래) ──
+function renderDetailImgs(sectionId,labelId,urls){
+  const sec=document.getElementById(sectionId);
+  const lbl=document.getElementById(labelId);
+  if(!urls||!urls.length){
+    sec.style.display='none';if(lbl)lbl.style.display='none';return;
+  }
+  sec.style.display='block';if(lbl)lbl.style.display='';
+  sec.innerHTML=`<div class="detail-img-grid">${urls.map((u,i)=>
+    `<img src="${u}" class="detail-img-thumb" onclick="openGallery(${JSON.stringify(urls).replace(/"/g,'&quot;')},${i})">`
+  ).join('')}</div>`;
 }
-function viewImg(url){
-  document.getElementById('img-viewer-img').src=url;
-  document.getElementById('img-viewer').classList.add('show');
+
+// ── 갤러리 뷰어 (핀치 줌 + 스와이프) ──
+let _gImgs=[],_gIdx=0,_gScale=1,_gTx=0,_gTy=0,_gLastDist=0,_gStartX=0,_gStartY=0,_gLastTap=0;
+
+function openGallery(urls,idx){
+  _gImgs=typeof urls==='string'?JSON.parse(urls):urls;
+  _gIdx=idx||0;
+  _showGalleryImg();
+  document.getElementById('gallery-viewer').classList.add('show');
 }
-function closeViewer(){document.getElementById('img-viewer').classList.remove('show');}
+function closeGallery(){document.getElementById('gallery-viewer').classList.remove('show');}
+function galleryPrev(){if(_gIdx>0){_gIdx--;_showGalleryImg();}}
+function galleryNext(){if(_gIdx<_gImgs.length-1){_gIdx++;_showGalleryImg();}}
+function _showGalleryImg(){
+  _gScale=1;_gTx=0;_gTy=0;
+  const img=document.getElementById('gallery-viewer-img');
+  img.src=_gImgs[_gIdx];
+  img.style.transform='';
+  const cnt=document.getElementById('gallery-viewer-counter');
+  cnt.textContent=_gImgs.length>1?`${_gIdx+1} / ${_gImgs.length}`:'';
+  document.getElementById('gallery-viewer-prev').style.display=_gIdx>0?'':'none';
+  document.getElementById('gallery-viewer-next').style.display=_gIdx<_gImgs.length-1?'':'none';
+}
+function _applyTransform(){
+  document.getElementById('gallery-viewer-img').style.transform=
+    `translate(${_gTx}px,${_gTy}px) scale(${_gScale})`;
+}
+
+// 터치 이벤트 (핀치 줌 + 스와이프)
+(function(){
+  const img=document.getElementById('gallery-viewer-img');
+  img.addEventListener('touchstart',e=>{
+    if(e.touches.length===2){
+      _gLastDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,
+        e.touches[0].clientY-e.touches[1].clientY);
+    } else if(e.touches.length===1){
+      _gStartX=e.touches[0].clientX-_gTx;
+      _gStartY=e.touches[0].clientY-_gTy;
+      // 더블탭
+      const now=Date.now();
+      if(now-_gLastTap<280){
+        if(_gScale>1){_gScale=1;_gTx=0;_gTy=0;}else{_gScale=2.5;}
+        _applyTransform();
+      }
+      _gLastTap=now;
+    }
+  },{passive:true});
+
+  img.addEventListener('touchmove',e=>{
+    e.preventDefault();
+    if(e.touches.length===2){
+      const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,
+        e.touches[0].clientY-e.touches[1].clientY);
+      _gScale=Math.min(Math.max(_gScale*(d/_gLastDist),.5),8);
+      _gLastDist=d;
+      _applyTransform();
+    } else if(e.touches.length===1&&_gScale>1){
+      _gTx=e.touches[0].clientX-_gStartX;
+      _gTy=e.touches[0].clientY-_gStartY;
+      _applyTransform();
+    }
+  },{passive:false});
+
+  img.addEventListener('touchend',e=>{
+    if(_gScale<1){_gScale=1;_gTx=0;_gTy=0;_applyTransform();}
+  },{passive:true});
+
+  // 스와이프로 이전/다음 (줌 없을 때만)
+  let _swipeX=0;
+  const viewer=document.getElementById('gallery-viewer-wrap');
+  viewer.addEventListener('touchstart',e=>{
+    if(e.touches.length===1)_swipeX=e.touches[0].clientX;
+  },{passive:true});
+  viewer.addEventListener('touchend',e=>{
+    if(_gScale>1)return;
+    const dx=e.changedTouches[0].clientX-_swipeX;
+    if(Math.abs(dx)>60){dx<0?galleryNext():galleryPrev();}
+  },{passive:true});
+})();
 
 // ── Init ──
 async function loadAll(useCache){
@@ -530,8 +618,7 @@ async function loadAll(useCache){
 }
 async function initApp(){
   S.stack=[{id:'screen-home',title:'☕ 커피 레시피',opt:{}}];
-  showScr('screen-home','☕ 커피 레시피',{});
-  history.pushState(null,'');
+  showScr('screen-home','☕ 커피 레시피',{});history.pushState(null,'');
   await run(async()=>{await loadAll(true);renderHome();});
   loadAll(false).then(()=>{enrich();S.recipeCache=buildCache(S.allDrips,S.allEsps);renderHome();}).catch(()=>{});
 }
@@ -554,8 +641,8 @@ function renderHome(){
   </div>`;
   Object.entries(map).forEach(([rid,g])=>{
     if(!g.beans.length)return;
-    const thumb=g.urls[0]?`<img src="${g.urls[0]}" style="width:18px;height:18px;border-radius:50%;object-fit:cover">`:'';
-    html+=`<div class="roaster-group-label" onclick="openRoaster('${rid}')">${thumb} ${g.name} ›</div>`;
+    const th=g.urls[0]?`<img src="${g.urls[0]}" style="width:18px;height:18px;border-radius:50%;object-fit:cover">`:'';
+    html+=`<div class="roaster-group-label" onclick="openRoaster('${rid}')">${th} ${g.name} ›</div>`;
     g.beans.forEach(b=>{html+=beanCardHTML(b,false);});
   });
   el.innerHTML=html;
@@ -596,9 +683,7 @@ function renderRoasterDetail(){
   const beans=S.beans.filter(b=>b.Roaster_REF===ro.id);
   document.getElementById('roaster-bean-list').innerHTML=beans.length
     ?beans.map(b=>beanCardHTML(b,false)).join(''):'<div class="empty">원두 없음</div>';
-  renderDetailImgs('roaster-images',getImgUrls(ro));
-  document.getElementById('roaster-images').previousElementSibling.style.display=
-    getImgUrls(ro).length?'':'none';
+  renderDetailImgs('roaster-images','roaster-img-label',getImgUrls(ro));
 }
 function showRoasterForm(id=null){
   pushScr('screen-roaster-form',id?'로스터리 수정':'로스터리 추가',{back:true});
@@ -638,7 +723,7 @@ function renderBeanDetail(){
     <div class="bean-name">${b.Bean_Name}</div>
     <div class="bean-roaster">${ro?ro.Roaster_Name:''}</div>
     <div class="info-grid">
-      <div class="info-item"><label>S/Blend</label><span>${b.Origin||'-'}</span></div>
+      <div class="info-item"><label>원산지</label><span>${b.Origin||'-'}</span></div>
       <div class="info-item"><label>로스팅</label><span>${b.Roast_Level||'-'}</span></div>
       <div class="info-item"><label>디게싱</label><span>${b.Degassing_Days||'-'}</span></div>
     </div>
@@ -663,10 +748,7 @@ function renderBeanDetail(){
           <div class="stat-cell"><div class="stat-v">${r.Yield_g}</div><div class="stat-l">Yield</div></div>
           <div class="stat-cell"><div class="stat-v">${r.Time_Sec}</div><div class="stat-l">Sec</div></div>
         </div></div>`).join(''):'<div class="empty">레시피 없음</div>';
-  const imgs=getImgUrls(b);
-  renderDetailImgs('bean-images',imgs);
-  const lbl=document.getElementById('bean-images').previousElementSibling;
-  if(lbl)lbl.style.display=imgs.length?'':'none';
+  renderDetailImgs('bean-images','bean-img-label',getImgUrls(b));
 }
 function gName(gid){return(S.grinders.find(g=>g.id===gid)||{}).Grinder_Name||gid;}
 
@@ -703,10 +785,7 @@ function openDrip(id){
       `<div class="list-row"><span class="grinder-name">${gName(g.Grinder_REF)}</span>
         <span class="grinder-clicks">${g.Clicks}</span><span class="grinder-unit"> 클릭</span></div>`).join('');
   }
-  const imgs=getImgUrls(r);
-  renderDetailImgs('drip-images',imgs);
-  const lbl=document.getElementById('drip-images').previousElementSibling;
-  if(lbl)lbl.style.display=imgs.length?'':'none';
+  renderDetailImgs('drip-images','drip-img-label',getImgUrls(r));
 }
 function editCurrentDrip(){S.drip&&showDripForm(S.drip.id);}
 async function deleteCurrentDrip(){
@@ -744,10 +823,7 @@ function openEsp(id){
       `<div class="list-row"><span class="grinder-name">${gName(g.Grinder_REF)}</span>
         <span class="grinder-clicks">${g.Clicks}</span><span class="grinder-unit"> 클릭</span></div>`).join('');
   }
-  const imgs=getImgUrls(r);
-  renderDetailImgs('esp-images',imgs);
-  const lbl=document.getElementById('esp-images').previousElementSibling;
-  if(lbl)lbl.style.display=imgs.length?'':'none';
+  renderDetailImgs('esp-images','esp-img-label',getImgUrls(r));
 }
 function editCurrentEsp(){S.esp&&showEspForm(S.esp.id);}
 async function deleteCurrentEsp(){
@@ -896,8 +972,7 @@ function showBeanForm(id=null){
   document.getElementById('bf-roaster').innerHTML=
     S.roasters.map(r=>`<option value="${r.id}">${r.Roaster_Name}</option>`).join('');
   ['bf-id','bf-name','bf-origin','bf-deg','bf-note'].forEach(i=>document.getElementById(i).value='');
-  document.getElementById('bf-roast').value='';
-  setImgUrls('bf',[]);
+  document.getElementById('bf-roast').value='';setImgUrls('bf',[]);
   if(id){
     const b=S.beans.find(x=>x.id===id);if(!b)return;
     document.getElementById('bf-id').value=b.id;
@@ -930,7 +1005,8 @@ async function saveBean(){
 }
 
 Object.assign(window,{
-  goBack,doHdrEdit,onSearch,triggerImg,onImgPick,removeImg,viewImg,closeViewer,
+  goBack,doHdrEdit,onSearch,triggerImg,onImgPick,removeImg,
+  openGallery,closeGallery,galleryPrev,galleryNext,
   openRoaster,showRoasterForm,saveRoaster,
   openBean,showBeanForm,saveBean,
   openDrip,editCurrentDrip,deleteCurrentDrip,showDripForm,setType,addStep,removeStep,saveDrip,
