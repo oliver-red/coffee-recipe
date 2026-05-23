@@ -36,7 +36,8 @@ html, body { height: 100%; background: var(--bg); color: var(--text);
   color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #screens { flex: 1; overflow: hidden; position: relative; }
 .screen { position: absolute; inset: 0; overflow-y: auto;
-  -webkit-overflow-scrolling: touch; padding: 16px;
+  -webkit-overflow-scrolling: touch; touch-action: pan-y;
+  overscroll-behavior: contain; padding: 16px;
   display: none; flex-direction: column; gap: 12px; }
 .screen.active { display: flex; }
 .search-box { position: relative; }
