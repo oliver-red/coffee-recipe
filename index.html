@@ -886,10 +886,6 @@ function removeStep(sid){
     c.querySelector('.step-card-label').textContent=`스텝 ${i+1}`;
   });
 }
--${g.id}`)?.value;
-    return v?{Grinder_REF:g.id,Clicks:Number(v)}:null;
-  }).filter(Boolean);
-}
 async function saveDrip(){
   const id=document.getElementById('df-id').value;
   const steps=Array.from(document.getElementById('df-steps').children).map((c,i)=>({
