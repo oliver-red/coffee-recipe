@@ -34,7 +34,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 #screens{flex:1;overflow:hidden;position:relative;}
 .screen{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
-  touch-action:pan-y;overscroll-behavior:contain;padding:16px;
+  touch-action:pan-y;overscroll-behavior:contain;padding:16px 16px 80px;
   display:none;flex-direction:column;gap:12px;}
 .screen.active{display:flex;}
 .search-box{position:relative;}
@@ -155,7 +155,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);
   display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .img-add-btn:active{border-color:var(--primary);color:var(--primary);}
 /* ── 상세 이미지 그리드 (항상 맨 아래) ── */
-.detail-img-section{display:none;}
+.detail-img-section{display:none;flex-shrink:0;}
 .detail-img-grid{display:flex;flex-wrap:wrap;gap:8px;}
 .detail-img-thumb{flex:1;min-width:120px;max-width:calc(50% - 4px);
   height:160px;object-fit:cover;border-radius:12px;box-shadow:var(--shadow);cursor:pointer;}
@@ -554,7 +554,7 @@ function renderDetailImgs(sectionId,labelId,urls){
   if(!urls||!urls.length){
     sec.style.display='none';if(lbl)lbl.style.display='none';return;
   }
-  sec.style.display='block';if(lbl)lbl.style.display='';
+  sec.style.display='block';sec.style.flexShrink='0';if(lbl)lbl.style.display='';
   sec.innerHTML=`<div class="detail-img-grid">${urls.map((u,i)=>
     `<img src="${u}" class="detail-img-thumb" onclick="openGallery(${JSON.stringify(urls).replace(/"/g,'&quot;')},${i})">`
   ).join('')}</div>`;
