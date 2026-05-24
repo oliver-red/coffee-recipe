@@ -34,8 +34,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 #screens{flex:1;overflow:hidden;position:relative;}
 .screen{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
-  touch-action:pan-y;overscroll-behavior:contain;padding:16px 16px 80px;
+  touch-action:pan-y;overscroll-behavior:contain;padding:16px;
   display:none;flex-direction:column;gap:12px;}
+.screen::after{content:'';display:block;height:80px;flex-shrink:0;}
 .screen.active{display:flex;}
 .search-box{position:relative;}
 .search-box input{width:100%;padding:13px 16px 13px 44px;background:var(--surface);
@@ -956,7 +957,7 @@ async function saveDrip(){
     Ice_g:document.getElementById('df-ice').value||'',
     Note:document.getElementById('df-note').value,
     image_urls:JSON.parse(document.getElementById('df-img-urls').value||'[]'),
-    Total_Pour:steps.reduce((s,x)=>s+x.Pour_g,0),
+    Total_Pour: steps.length > 0 ? steps[steps.length-1].Pour_g : 0,
     steps,grinder_settings:collectGr('df-grinders'),
   };
   await run(async()=>{
