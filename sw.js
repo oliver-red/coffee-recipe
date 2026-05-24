@@ -1,4 +1,4 @@
-const CACHE = 'coffee-recipe-v5';
+const CACHE = 'coffee-recipe-v6';
 
 self.addEventListener('install', e => {
   self.skipWaiting();
