@@ -81,6 +81,18 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 .detail-item label{font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;}
 .detail-item span{display:block;font-size:16px;font-weight:800;color:var(--primary);margin-top:3px;}
 .list-box{background:var(--card);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);flex-shrink:0;}
+.action-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9995;display:none;}
+.action-overlay.show{display:block;}
+.action-sheet{position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+  width:100%;max-width:480px;background:var(--surface);border-radius:20px 20px 0 0;
+  padding:16px 16px calc(16px + env(safe-area-inset-bottom));z-index:9996;
+  box-shadow:0 -4px 20px rgba(0,0,0,.15);display:none;flex-direction:column;gap:8px;}
+.action-sheet.show{display:flex;}
+.as-btn{padding:16px;border:none;background:var(--card2);border-radius:12px;
+  font-size:16px;font-weight:600;cursor:pointer;color:var(--text);text-align:left;}
+.as-btn:active{background:var(--primary-bg);}
+.as-cancel{padding:14px;border:none;background:none;font-size:16px;
+  color:var(--text-3);cursor:pointer;border-radius:12px;}
 .list-row{display:flex;align-items:center;padding:13px 16px;border-bottom:1px solid var(--border);gap:12px;}
 .list-row:last-child{border-bottom:none;}
 .step-num{width:28px;height:28px;background:var(--primary);color:#fff;border-radius:50%;
@@ -182,18 +194,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 ::-webkit-scrollbar{width:3px;}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
 .pb24{padding-bottom:calc(80px + env(safe-area-inset-bottom,0px));}
-.action-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9995;display:none;}
-.action-overlay.show{display:block;}
-.action-sheet{position:fixed;bottom:0;left:50%;transform:translateX(-50%);
-  width:100%;max-width:480px;background:var(--surface);border-radius:20px 20px 0 0;
-  padding:16px 16px calc(16px + env(safe-area-inset-bottom));z-index:9996;
-  box-shadow:0 -4px 20px rgba(0,0,0,.15);display:none;flex-direction:column;gap:8px;}
-.action-sheet.show{display:flex;}
-.as-btn{padding:16px;border:none;background:var(--card2);border-radius:12px;
-  font-size:16px;font-weight:600;cursor:pointer;color:var(--text);text-align:left;}
-.as-btn:active{background:var(--primary-bg);}
-.as-cancel{padding:14px;border:none;background:none;font-size:16px;
-  color:var(--text-3);cursor:pointer;border-radius:12px;}  
 </style>
 </head>
 <body>
@@ -234,8 +234,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);
       <div class="form-group"><label class="form-label">사진</label>
         <div class="img-gallery" id="rf-gallery"></div>
         <button class="img-add-btn" onclick="triggerImg('rf')">+</button>
-        <input type="file" id="rf-cam-file"  accept="image/*" capture="environment" style="display:none" onchange="onImgPick('rf',this)">
-        <input type="file" id="rf-gal-file"  accept="image/*" style="display:none" onchange="onImgPick('rf',this)">
+        <input type="file" id="rf-cam-file" accept="image/*" capture="environment" style="display:none" onchange="onImgPick('rf',this)">
+        <input type="file" id="rf-gal-file" accept="image/*" style="display:none" onchange="onImgPick('rf',this)">
         <input type="hidden" id="rf-img-urls" value="[]">
       </div>
       <div class="btn-row pb24">
@@ -317,8 +317,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);
       <div class="form-group"><label class="form-label">사진</label>
         <div class="img-gallery" id="df-gallery"></div>
         <button class="img-add-btn" onclick="triggerImg('df')">+</button>
-        <input type="file" id="df-cam-file"  accept="image/*" capture="environment" style="display:none" onchange="onImgPick('df',this)">
-        <input type="file" id="df-gal-file"  accept="image/*" style="display:none" onchange="onImgPick('df',this)">
+        <input type="file" id="df-cam-file" accept="image/*" capture="environment" style="display:none" onchange="onImgPick('df',this)">
+        <input type="file" id="df-gal-file" accept="image/*" style="display:none" onchange="onImgPick('df',this)">
         <input type="hidden" id="df-img-urls" value="[]">
       </div>
       <div class="btn-row pb24">
@@ -341,8 +341,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);
       <div class="form-group"><label class="form-label">사진</label>
         <div class="img-gallery" id="ef-gallery"></div>
         <button class="img-add-btn" onclick="triggerImg('ef')">+</button>
-        <input type="file" id="ef-cam-file"  accept="image/*" capture="environment" style="display:none" onchange="onImgPick('ef',this)">
-        <input type="file" id="ef-gal-file"  accept="image/*" style="display:none" onchange="onImgPick('ef',this)">
+        <input type="file" id="ef-cam-file" accept="image/*" capture="environment" style="display:none" onchange="onImgPick('ef',this)">
+        <input type="file" id="ef-gal-file" accept="image/*" style="display:none" onchange="onImgPick('ef',this)">
         <input type="hidden" id="ef-img-urls" value="[]">
       </div>
       <div class="section-label" style="margin-top:4px">그라인더 설정 (선택)</div>
@@ -375,8 +375,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);
       <div class="form-group"><label class="form-label">사진</label>
         <div class="img-gallery" id="bf-gallery"></div>
         <button class="img-add-btn" onclick="triggerImg('bf')">+</button>
-        <input type="file" id="bf-cam-file"  accept="image/*" capture="environment" style="display:none" onchange="onImgPick('bf',this)">
-        <input type="file" id="bf-gal-file"  accept="image/*" style="display:none" onchange="onImgPick('bf',this)">
+        <input type="file" id="bf-cam-file" accept="image/*" capture="environment" style="display:none" onchange="onImgPick('bf',this)">
+        <input type="file" id="bf-gal-file" accept="image/*" style="display:none" onchange="onImgPick('bf',this)">
         <input type="hidden" id="bf-img-urls" value="[]">
       </div>
       <div class="btn-row pb24">
@@ -398,12 +398,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);
     <div id="gallery-viewer-counter"></div>
   </div>
 </div>
+
 <div id="img-action-overlay" class="action-overlay" onclick="closeActionSheet()"></div>
 <div id="img-action-sheet" class="action-sheet">
   <button class="as-btn" onclick="pickCamera()">📷 카메라로 찍기</button>
   <button class="as-btn" onclick="pickGallery()">🖼️ 갤러리에서 선택</button>
   <button class="as-cancel" onclick="closeActionSheet()">취소</button>
 </div>
+
 <div id="toast"></div>
 <div id="loading"><div class="spinner"></div></div>
 
@@ -504,7 +506,18 @@ async function uploadImg(file){
   if(d.error)throw new Error(d.error.message);
   return d.secure_url;
 }
-function triggerImg(field){document.getElementById(field+'-img-file').click();}
+let _imgField='';
+function triggerImg(field){
+  _imgField=field;
+  document.getElementById('img-action-sheet').classList.add('show');
+  document.getElementById('img-action-overlay').classList.add('show');
+}
+function closeActionSheet(){
+  document.getElementById('img-action-sheet').classList.remove('show');
+  document.getElementById('img-action-overlay').classList.remove('show');
+}
+function pickCamera(){closeActionSheet();document.getElementById(_imgField+'-cam-file').click();}
+function pickGallery(){closeActionSheet();document.getElementById(_imgField+'-gal-file').click();}
 async function onImgPick(field,input){
   const files=Array.from(input.files);if(!files.length)return;
   input.value='';loading(true);
@@ -1026,7 +1039,7 @@ async function saveBean(){
 }
 
 Object.assign(window,{
-  goBack,doHdrEdit,onSearch,triggerImg,onImgPick,removeImg,
+  goBack,doHdrEdit,onSearch,triggerImg,onImgPick,removeImg,closeActionSheet,pickCamera,pickGallery,
   openGallery,closeGallery,galleryPrev,galleryNext,
   openRoaster,showRoasterForm,saveRoaster,
   openBean,showBeanForm,saveBean,
