@@ -101,9 +101,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 .step-pour{font-size:18px;font-weight:800;color:var(--text);}
 .step-unit{font-size:12px;color:var(--text-3);}
 .step-time{margin-left:auto;font-size:14px;color:var(--text-2);font-weight:500;}
-.grinder-name{flex:1;font-size:14px;font-weight:500;}
-.grinder-clicks{font-size:22px;font-weight:800;color:var(--primary);}
-.grinder-unit{font-size:12px;color:var(--text-3);}
 .btn-row{display:flex;gap:10px;}
 .btn{flex:1;padding:14px;border:none;border-radius:var(--radius);font-size:15px;font-weight:700;cursor:pointer;transition:transform .12s;}
 .btn:active{transform:scale(.97);}
@@ -131,13 +128,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 .step-del{width:30px;height:30px;border:none;background:#fff0f0;color:var(--danger);
   font-size:16px;cursor:pointer;border-radius:8px;display:flex;align-items:center;justify-content:center;}
 .step-inputs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
-.grinder-form-row{display:flex;align-items:center;background:var(--card);
-  border-radius:12px;padding:12px 14px;gap:12px;box-shadow:var(--shadow-sm);}
-.grinder-form-name{flex:1;font-size:14px;font-weight:500;}
-.grinder-form-input{width:72px;padding:9px;background:var(--card2);
-  border:1.5px solid var(--border);border-radius:10px;color:var(--text);
-  font-size:16px;font-weight:700;text-align:center;outline:none;}
-.grinder-form-input:focus{border-color:var(--primary);}
+
 .roaster-group-label{font-size:11px;font-weight:800;color:var(--text-3);
   text-transform:uppercase;letter-spacing:.1em;padding:12px 4px 6px;
   cursor:pointer;display:flex;align-items:center;gap:6px;}
@@ -263,10 +254,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);
       <div id="drip-info" class="detail-header"></div>
       <div class="section-label">추출 단계</div>
       <div id="drip-steps" class="list-box"></div>
-      <div id="drip-grinder-wrap">
-        <div class="section-label">그라인더 설정</div>
-        <div id="drip-grinders" class="list-box"></div>
-      </div>
       <div class="btn-row">
         <button class="btn btn-secondary" onclick="editCurrentDrip()">✏️ 수정</button>
         <button class="btn btn-danger" onclick="deleteCurrentDrip()">🗑 삭제</button>
@@ -278,10 +265,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);
     <!-- ESP DETAIL -->
     <div id="screen-esp" class="screen">
       <div id="esp-info" class="detail-header"></div>
-      <div id="esp-grinder-wrap">
-        <div class="section-label">그라인더 설정</div>
-        <div id="esp-grinders" class="list-box"></div>
-      </div>
       <div class="btn-row">
         <button class="btn btn-secondary" onclick="editCurrentEsp()">✏️ 수정</button>
         <button class="btn btn-danger" onclick="deleteCurrentEsp()">🗑 삭제</button>
@@ -313,8 +296,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);
       <div class="section-label">추출 단계</div>
       <div id="df-steps" style="display:flex;flex-direction:column;gap:10px"></div>
       <button class="btn btn-secondary" onclick="addStep()">+ 스텝 추가</button>
-      <div class="section-label" style="margin-top:4px">그라인더 설정 (선택)</div>
-      <div id="df-grinders" style="display:flex;flex-direction:column;gap:8px"></div>
       <div class="form-group"><label class="form-label">사진</label>
         <div class="img-gallery" id="df-gallery"></div>
         <button class="img-add-btn" onclick="triggerImg('df')">+</button>
@@ -346,8 +327,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);
         <input type="file" id="ef-gal-file" accept="image/*" style="display:none" onchange="onImgPick('ef',this)">
         <input type="hidden" id="ef-img-urls" value="[]">
       </div>
-      <div class="section-label" style="margin-top:4px">그라인더 설정 (선택)</div>
-      <div id="ef-grinders" style="display:flex;flex-direction:column;gap:8px"></div>
       <div class="btn-row pb24">
         <button class="btn btn-secondary" onclick="goBack()">취소</button>
         <button class="btn btn-primary" onclick="saveEsp()">저장</button>
@@ -439,7 +418,7 @@ const PRESET='coffee_recipe';
 
 const S={
   stack:[],hdrEditFn:null,stepSeq:0,dirty:false,
-  roasters:[],drippers:[],grinders:[],
+  roasters:[],drippers:[],
   beans:[],allDrips:[],allEsps:[],
   recipeCache:{},
   roaster:null,bean:null,drip:null,esp:null,
@@ -452,8 +431,8 @@ function getImgUrls(item){
 }
 function buildCache(drips,esps){
   const c={};
-  drips.forEach(r=>{c[r.id]={steps:r.steps||[],grinder_settings:r.grinder_settings||[]};});
-  esps.forEach(r=>{c['esp_'+r.id]={steps:[],grinder_settings:r.grinder_settings||[]};});
+  drips.forEach(r=>{c[r.id]={steps:r.steps||[]};});
+  esps.forEach(r=>{c['esp_'+r.id]={steps:[]};});
   return c;
 }
 function enrich(){
@@ -643,11 +622,11 @@ function _applyTransform(){
 // ── Init ──
 async function loadAll(useCache){
   const g=useCache?getColCache:getCol;
-  const[ro,be,dr,gr,rd,re]=await Promise.all([
-    g('roasters'),g('beans'),g('drippers'),g('grinders'),
+  const[ro,be,dr,rd,re]=await Promise.all([
+    g('roasters'),g('beans'),g('drippers'),
     g('recipe_drip'),g('recipe_espresso'),
   ]);
-  S.roasters=ro;S.beans=be;S.drippers=dr;S.grinders=gr;
+  S.roasters=ro;S.beans=be;S.drippers=dr;
   S.allDrips=rd;S.allEsps=re;
   enrich();S.recipeCache=buildCache(S.allDrips,S.allEsps);
 }
@@ -785,13 +764,12 @@ function renderBeanDetail(){
         </div></div>`).join(''):'<div class="empty">레시피 없음</div>';
   renderDetailImgs('bean-images','bean-img-label',getImgUrls(b));
 }
-function gName(gid){return(S.grinders.find(g=>g.id===gid)||{}).Grinder_Name||gid;}
 
 // ── Drip Detail ──
 function openDrip(id){
   S.drip=S.allDrips.find(r=>r.id===id);if(!S.drip)return;
   pushScr('screen-drip',`${S.drip.Dripper_Name} ${S.drip.Type||''}`,{back:true});
-  const{steps,grinder_settings:gs}=S.recipeCache[id]||{steps:[],grinder_settings:[]};
+  const{steps}=S.recipeCache[id]||{steps:[]};
   const r=S.drip;
   document.getElementById('drip-info').innerHTML=`
     <div class="card-row">
@@ -812,14 +790,6 @@ function openDrip(id){
         <div><span class="step-pour">${s.Pour_g}</span><span class="step-unit"> g</span></div>
         ${t.trim()?`<div class="step-time">⏱ ${t.trim()}</div>`:''}</div>`;
     }).join(''):'<div style="padding:16px;text-align:center;color:var(--text-3)">스텝 없음</div>';
-  const gw=document.getElementById('drip-grinder-wrap');
-  if(!gs.length){gw.style.display='none';}
-  else{
-    gw.style.display='block';
-    document.getElementById('drip-grinders').innerHTML=gs.map(g=>
-      `<div class="list-row"><span class="grinder-name">${gName(g.Grinder_REF)}</span>
-        <span class="grinder-clicks">${g.Clicks}</span><span class="grinder-unit"> 클릭</span></div>`).join('');
-  }
   renderDetailImgs('drip-images','drip-img-label',getImgUrls(r));
 }
 function editCurrentDrip(){S.drip&&showDripForm(S.drip.id);}
@@ -837,7 +807,7 @@ async function deleteCurrentDrip(){
 function openEsp(id){
   S.esp=S.allEsps.find(r=>r.id===id);if(!S.esp)return;
   pushScr('screen-esp','에스프레소',{back:true});
-  const{grinder_settings:gs}=S.recipeCache['esp_'+id]||{grinder_settings:[]};
+  
   const r=S.esp;
   document.getElementById('esp-info').innerHTML=`
     <div class="card-row">
@@ -850,14 +820,6 @@ function openEsp(id){
       <div class="detail-item"><label>Yield</label><span>${r.Yield_g}g</span></div>
       <div class="detail-item"><label>시간</label><span>${r.Time_Sec}초</span></div>
     </div>`;
-  const gw=document.getElementById('esp-grinder-wrap');
-  if(!gs.length){gw.style.display='none';}
-  else{
-    gw.style.display='block';
-    document.getElementById('esp-grinders').innerHTML=gs.map(g=>
-      `<div class="list-row"><span class="grinder-name">${gName(g.Grinder_REF)}</span>
-        <span class="grinder-clicks">${g.Clicks}</span><span class="grinder-unit"> 클릭</span></div>`).join('');
-  }
   renderDetailImgs('esp-images','esp-img-label',getImgUrls(r));
 }
 function editCurrentEsp(){S.esp&&showEspForm(S.esp.id);}
@@ -878,10 +840,10 @@ function showDripForm(id=null){
     S.drippers.map(d=>`<option value="${d.id}">${d.Dripper_Name}</option>`).join('');
   ['df-id','df-dose','df-temp','df-ice','df-note'].forEach(i=>document.getElementById(i).value='');
   setType('HOT');document.getElementById('df-steps').innerHTML='';S.stepSeq=0;
-  setImgUrls('df',[]);renderGrForm('df-grinders',[]);
+  setImgUrls('df',[]);
   if(id){
     const r=S.allDrips.find(x=>x.id===id);if(!r)return;
-    const{steps,grinder_settings:gs}=S.recipeCache[id]||{steps:[],grinder_settings:[]};
+    const{steps}=S.recipeCache[id]||{steps:[]};
     document.getElementById('df-id').value=r.id;
     document.getElementById('df-dripper').value=r.Dripper_REF;
     setType(r.Type||'HOT');
@@ -890,7 +852,7 @@ function showDripForm(id=null){
     document.getElementById('df-ice').value=r.Ice_g||'';
     document.getElementById('df-note').value=r.Note||'';
     setImgUrls('df',getImgUrls(r));
-    steps.forEach(s=>addStep(s));renderGrForm('df-grinders',gs);
+    steps.forEach(s=>addStep(s));
   }
 }
 function setType(t){
@@ -924,18 +886,7 @@ function removeStep(sid){
     c.querySelector('.step-card-label').textContent=`스텝 ${i+1}`;
   });
 }
-function renderGrForm(cid,existing){
-  const map={};existing.forEach(s=>{map[s.Grinder_REF]=s.Clicks;});
-  document.getElementById(cid).innerHTML=S.grinders.map(g=>`
-    <div class="grinder-form-row">
-      <span class="grinder-form-name">${g.Grinder_Name}</span>
-      <input type="number" class="grinder-form-input" id="${cid}-${g.id}"
-        placeholder="-" value="${map[g.id]||''}">
-      <span class="grinder-unit">클릭</span></div>`).join('');
-}
-function collectGr(cid){
-  return S.grinders.map(g=>{
-    const v=document.getElementById(`${cid}-${g.id}`)?.value;
+-${g.id}`)?.value;
     return v?{Grinder_REF:g.id,Clicks:Number(v)}:null;
   }).filter(Boolean);
 }
@@ -958,7 +909,7 @@ async function saveDrip(){
     Note:document.getElementById('df-note').value,
     image_urls:JSON.parse(document.getElementById('df-img-urls').value||'[]'),
     Total_Pour: steps.length > 0 ? steps[steps.length-1].Pour_g : 0,
-    steps,grinder_settings:collectGr('df-grinders'),
+    steps,
   };
   await run(async()=>{
     if(id)await updateDoc(docRef('recipe_drip',id),data);
@@ -971,16 +922,16 @@ async function saveDrip(){
 function showEspForm(id=null){
   pushScr('screen-esp-form',id?'에스프레소 수정':'에스프레소 추가',{back:true});
   ['ef-id','ef-dose','ef-temp','ef-yield','ef-time'].forEach(i=>document.getElementById(i).value='');
-  setImgUrls('ef',[]);renderGrForm('ef-grinders',[]);
+  setImgUrls('ef',[]);
   if(id){
     const r=S.allEsps.find(x=>x.id===id);if(!r)return;
-    const{grinder_settings:gs}=S.recipeCache['esp_'+id]||{grinder_settings:[]};
+    
     document.getElementById('ef-id').value=r.id;
     document.getElementById('ef-dose').value=r.Dose_g||'';
     document.getElementById('ef-temp').value=r.Temp_c||'';
     document.getElementById('ef-yield').value=r.Yield_g||'';
     document.getElementById('ef-time').value=r.Time_Sec||'';
-    setImgUrls('ef',getImgUrls(r));renderGrForm('ef-grinders',gs);
+    setImgUrls('ef',getImgUrls(r));
   }
 }
 async function saveEsp(){
@@ -992,7 +943,6 @@ async function saveEsp(){
     Yield_g:document.getElementById('ef-yield').value,
     Time_Sec:document.getElementById('ef-time').value,
     image_urls:JSON.parse(document.getElementById('ef-img-urls').value||'[]'),
-    grinder_settings:collectGr('ef-grinders'),
   };
   await run(async()=>{
     if(id)await updateDoc(docRef('recipe_espresso',id),data);
